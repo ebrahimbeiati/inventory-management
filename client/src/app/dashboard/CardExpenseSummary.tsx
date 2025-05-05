@@ -3,7 +3,7 @@ import {
     useGetDashboardMetricsQuery,
   } from "@/state/api";
   import { TrendingUp } from "lucide-react";
-  import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+  import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, TooltipProps } from "recharts";
   
   type ExpenseSums = {
     [category: string]: number;
@@ -43,6 +43,31 @@ import {
     );
     const formattedTotalExpenses = totalExpenses.toFixed(2);
   
+    // Custom tooltip for the PieChart
+    type ExpenseCategory = {
+      name: string;
+      value: number;
+    };
+    
+    const CustomTooltip = ({ 
+      active, 
+      payload 
+    }: TooltipProps<number, string> & { payload?: Array<{ payload: ExpenseCategory }> }) => {
+      if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+          <div className="bg-white p-2 border border-gray-200 shadow-md m-5 rounded flex-wrap">
+            <p className="font-medium">{data.name}</p>
+            <p className="text-sm">${data.value.toLocaleString("en")}</p>
+            <p className="text-xs text-gray-500">
+              {((data.value / totalExpenses) * 100).toFixed(1)}% of total
+            </p>
+          </div>
+        );
+      }
+      return null;
+    };
+  
     return (
       <div className="row-span-3 bg-white shadow-md rounded-2xl flex flex-col justify-between">
         {isLoading ? (
@@ -58,7 +83,7 @@ import {
             </div>
             {/* BODY */}
             <div className="xl:flex justify-between pr-7">
-              {/* CHART */}
+              {/* CHARTS */}
               <div className="relative basis-3/5">
                 <ResponsiveContainer width="100%" height={140}>
                   <PieChart>
@@ -76,9 +101,12 @@ import {
                         <Cell
                           key={`cell-${index}`}
                           fill={colors[index % colors.length]}
+                          stroke="#ffffff"
+                          strokeWidth={2}
                         />
                       ))}
                     </Pie>
+                    <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center basis-2/5">
