@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed": "ts-node prisma/seed.ts",
     "build": "rimraf dist && npx tsc",
-    "start": "npm run build && node dist/index.js",
-    "dev": "npm run build && concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\""
+    "start": "nodemon --exec ts-node src/index.ts",
+    "dev": "concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\""
   },
   "keywords": [],
   "author": "",
@@ -24,13 +24,15 @@
     "helmet": "^8.1.0",
     "morgan": "^1.10.0",
     "prisma": "^6.7.0",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.15.3",
+    "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
