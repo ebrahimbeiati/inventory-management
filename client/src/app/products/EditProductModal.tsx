@@ -1,75 +1,46 @@
-"use client";
-
 import { useState, useEffect } from "react";
+import { Product } from "@/state/api";
 import { X } from "lucide-react";
-import { useGetCategoriesQuery } from "@/state/api";
-import ImageUploader from "@/app/components/ImageUploader";
 
-type ProductFormData = {
-  name: string;
-  price: number;
-  stockQuantity: number;
-  rating?: number;
-  imageUrl?: string;
-  category?: string;
-  tags?: string;
-  description?: string;
-}
-
-interface CreateProductModalProps {
+interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (productData: ProductFormData) => void;
+  product: Product | null;
+  onSubmit: (product: Product) => void;
 }
 
-export default function CreateProductModal({ isOpen, onClose, onCreate }: CreateProductModalProps) {
-  const { data: categories } = useGetCategoriesQuery();
-  
+const EditProductModal = ({ isOpen, onClose, product, onSubmit }: EditProductModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: "",
+  const [formData, setFormData] = useState<Partial<Product>>({
+    name: '',
+    description: '',
     price: 0,
     stockQuantity: 0,
+    category: '',
+    imageUrl: '',
     rating: 0,
-    imageUrl: "",
-    category: "",
-    tags: "",
-    description: ""
+    tags: '',
   });
-  
-  const [newCategory, setNewCategory] = useState("");
-  const [showNewCategory, setShowNewCategory] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (product) {
       setFormData({
-        name: "",
-        price: 0,
-        stockQuantity: 0,
-        rating: 0,
-        imageUrl: "",
-        category: "",
-        tags: "",
-        description: ""
+        ...product,
       });
     }
-  }, [isOpen]);
+  }, [product]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // For numeric fields, validate the input
-    if (name === "price" || name === "stockQuantity" || name === "rating") {
-      // If value is empty, set to 0 instead of NaN
-      const parsedValue = value === "" ? 0 : parseFloat(value);
-      
-      // Ensure we don't set NaN values
+    // For numeric fields, ensure we have valid numbers
+    if (name === 'price' || name === 'stockQuantity' || name === 'rating') {
+      const numValue = value === '' ? 0 : parseFloat(value);
       setFormData({
         ...formData,
-        [name]: isNaN(parsedValue) ? 0 : parsedValue,
+        [name]: isNaN(numValue) ? 0 : numValue,
       });
     } else {
-      // For non-numeric fields, set the value as is
       setFormData({
         ...formData,
         [name]: value,
@@ -77,49 +48,32 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
     }
   };
 
-  const handleImageChange = (base64Image: string | null) => {
-    setFormData({
-      ...formData,
-      imageUrl: base64Image || undefined,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Add new category to formData if provided
-    let updatedData = { ...formData };
-    if (showNewCategory && newCategory) {
-      updatedData.category = newCategory;
-    }
-    
-    onCreate(updatedData);
-    
-    // Reset form
-    setFormData({
-      name: "",
-      price: 0,
-      stockQuantity: 0,
-      rating: 0,
-      imageUrl: "",
-      category: "",
-      tags: "",
-      description: ""
-    });
-    setNewCategory("");
-    setShowNewCategory(false);
+
+    // Validate numeric fields one more time before submission
+    const validatedData = {
+      ...formData,
+      price: formData.price || 0,
+      stockQuantity: formData.stockQuantity || 0,
+      rating: formData.rating || 0
+    };
+
+    onSubmit(validatedData as Product);
     setIsLoading(false);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !product) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Add New Product
+            Edit Product
           </h3>
         </div>
 
@@ -135,8 +89,8 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                 name="name"
                 id="name"
                 required
-                value={formData.name}
-                onChange={handleInputChange}
+                value={formData.name || ''}
+                onChange={handleChange}
                 className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
               />
             </div>
@@ -149,8 +103,8 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                 name="description"
                 id="description"
                 rows={3}
-                value={formData.description}
-                onChange={handleInputChange}
+                value={formData.description || ''}
+                onChange={handleChange}
                 className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
               />
             </div>
@@ -171,8 +125,8 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                     required
                     min="0"
                     step="0.01"
-                    value={formData.price}
-                    onChange={handleInputChange}
+                    value={formData.price || ''}
+                    onChange={handleChange}
                     className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                   />
                 </div>
@@ -189,8 +143,8 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                   required
                   min="0"
                   step="1"
-                  value={formData.stockQuantity}
-                  onChange={handleInputChange}
+                  value={formData.stockQuantity || ''}
+                  onChange={handleChange}
                   className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                 />
               </div>
@@ -201,48 +155,25 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                 <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Category
                 </label>
-                {showNewCategory ? (
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      placeholder="New category name"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewCategory(false)}
-                      className="px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex space-x-2">
-                    <select
-                      name="category"
-                      id="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="">Select a category</option>
-                      {categories?.map((category: any) => (
-                        <option key={category._id} value={category.name}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewCategory(true)}
-                      className="px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      New
-                    </button>
-                  </div>
-                )}
+                <select
+                  name="category"
+                  id="category"
+                  value={formData.category || ''}
+                  onChange={handleChange}
+                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                >
+                  <option value="">Select a category</option>
+                  <option value="Electronics">Electronics</option>
+                  <option value="Clothing">Clothing</option>
+                  <option value="Home & Kitchen">Home & Kitchen</option>
+                  <option value="Books">Books</option>
+                  <option value="Toys">Toys</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Beauty">Beauty</option>
+                  <option value="Health">Health</option>
+                  <option value="Automotive">Automotive</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
               <div>
@@ -256,8 +187,8 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                   min="0"
                   max="5"
                   step="0.1"
-                  value={formData.rating || 0}
-                  onChange={handleInputChange}
+                  value={formData.rating || ''}
+                  onChange={handleChange}
                   className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                 />
               </div>
@@ -272,7 +203,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                 name="imageUrl"
                 id="imageUrl"
                 value={formData.imageUrl || ''}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 placeholder="https://example.com/image.jpg"
                 className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
               />
@@ -297,7 +228,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                 name="tags"
                 id="tags"
                 value={formData.tags || ''}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 placeholder="tag1, tag2, tag3"
                 className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
               />
@@ -326,7 +257,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
                 isLoading ? 'opacity-75 cursor-not-allowed' : ''
               }`}
             >
-              {isLoading ? 'Saving...' : 'Create Product'}
+              {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
             <button
               type="button"
@@ -340,4 +271,6 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
       </div>
     </div>
   );
-}
+};
+
+export default EditProductModal; 

@@ -52,7 +52,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="w-full">
+    <div className="mx-auto pb-5 w-full px-4 sm:px-6 lg:px-8 ml-0 sm:ml-64">
       <Header name="User Settings" />
       <div className="overflow-x-auto mt-5 shadow-md">
         <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg">

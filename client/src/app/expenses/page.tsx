@@ -73,7 +73,7 @@ const Expenses = () => {
   const classNames = {
     label: "block text-sm font-medium text-gray-700",
     selectInput:
-      "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md",
+      "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 dark:text-gray-900 sm:text-sm rounded-md",
   };
 
   if (isLoading) {
@@ -89,11 +89,11 @@ const Expenses = () => {
   }
 
   return (
-    <div>
+    <div className="mx-auto pb-5 w-full px-4 sm:px-6 lg:px-8 ml-0 sm:ml-64">
       {/* HEADER */}
-      <div className="mb-5">
+      <div className="mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
         <Header name="Expenses" />
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-white">
           A visual representation of expenses over time.
         </p>
       </div>
@@ -101,7 +101,7 @@ const Expenses = () => {
       {/* FILTERS */}
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div className="w-full md:w-1/3 bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 ">
             Filter by Category and Date
           </h3>
           <div className="space-y-4">
@@ -116,6 +116,7 @@ const Expenses = () => {
                 className={classNames.selectInput}
                 defaultValue="All"
                 onChange={(e) => setSelectedCategory(e.target.value)}
+               
               >
                 <option>All</option>
                 <option>Office</option>

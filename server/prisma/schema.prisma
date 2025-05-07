@@ -25,6 +25,9 @@ model Products {
   price         Float
   rating        Float?
   stockQuantity Int
+  imageUrl      String?
+  category      String?
+  tags          String?     // Comma-separated tags
   Sales         Sales[]
   Purchases     Purchases[]
 }
