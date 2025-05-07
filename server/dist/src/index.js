@@ -12,6 +12,8 @@ const morgan_1 = __importDefault(require("morgan"));
 // Routes imports
 const dashboardRoutes_1 = __importDefault(require("./routes/dashboardRoutes"));
 const productRoutes_1 = __importDefault(require("./routes/productRoutes"));
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const expenseRoutes_1 = __importDefault(require("./routes/expenseRoutes"));
 // Configurations 
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -25,6 +27,8 @@ app.use(helmet_1.default.crossOriginResourcePolicy({ policy: "cross-origin" }));
 // Routes
 app.use("/dashboard", dashboardRoutes_1.default);
 app.use("/products", productRoutes_1.default);
+app.use("/users", userRoutes_1.default);
+app.use("/expenses", expenseRoutes_1.default);
 //server port
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

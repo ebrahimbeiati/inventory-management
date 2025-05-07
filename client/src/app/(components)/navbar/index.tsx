@@ -71,7 +71,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-2 cursor-pointer">image</div>
                 <span className='font-semibold text-gray-500 dark:text-gray-300'>Ebrahim</span>
             </div>
-            <Link href="/setting">
+            <Link href="/settings">
             <Settings className="w-5 h-5 text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" />
         </Link>
 
