@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Product } from "@/state/api";
-import { X } from "lucide-react";
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -9,18 +8,21 @@ interface EditProductModalProps {
   onSubmit: (product: Product) => void;
 }
 
+// Default empty form state
+const DEFAULT_FORM_STATE: Partial<Product> = {
+  name: '',
+  description: '',
+  price: 0,
+  stockQuantity: 0,
+  category: '',
+  imageUrl: '',
+  rating: 0,
+  tags: '',
+};
+
 const EditProductModal = ({ isOpen, onClose, product, onSubmit }: EditProductModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<Product>>({
-    name: '',
-    description: '',
-    price: 0,
-    stockQuantity: 0,
-    category: '',
-    imageUrl: '',
-    rating: 0,
-    tags: '',
-  });
+  const [formData, setFormData] = useState<Partial<Product>>({...DEFAULT_FORM_STATE});
 
   useEffect(() => {
     if (product) {

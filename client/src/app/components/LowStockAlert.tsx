@@ -4,15 +4,20 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { useGetProductsQuery } from '@/state/api';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 const LowStockAlert = () => {
-  const { data: products } = useGetProductsQuery();
+  const { user } = useAuth();
+  const { data: products } = useGetProductsQuery(undefined, {
+    // Skip the query if user is not authenticated
+    skip: !user
+  });
   const [isVisible, setIsVisible] = useState(false);
   const [lowStockProducts, setLowStockProducts] = useState<{ id: string; name: string; quantity: number }[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    if (products) {
+    if (user && products) {
       const lowStock = products.filter(
         product => product.stockQuantity > 0 && product.stockQuantity < 5
       ).map(product => ({
@@ -23,10 +28,13 @@ const LowStockAlert = () => {
       
       setLowStockProducts(lowStock);
       setIsVisible(lowStock.length > 0);
+    } else {
+      setLowStockProducts([]);
+      setIsVisible(false);
     }
-  }, [products]);
+  }, [products, user]);
 
-  if (!isVisible || lowStockProducts.length === 0) {
+  if (!user || !isVisible || lowStockProducts.length === 0) {
     return null;
   }
 

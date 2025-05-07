@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, UserPlus, Search, Filter, X, Check, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { 
@@ -11,6 +11,16 @@ import {
   User,
   NewUser
 } from '@/state/api';
+import { useAuth } from '@/hooks/useAuth';
+
+// Define the user form data type
+interface UserFormData {
+  name: string;
+  email: string;
+  password?: string;
+  role: string;
+  status: string;
+}
 
 // User form modal component
 function UserFormModal({ 
@@ -22,17 +32,9 @@ function UserFormModal({
   isOpen: boolean; 
   onClose: () => void; 
   user?: User | null; 
-  onSubmit: (userData: any) => void;
+  onSubmit: (userData: UserFormData) => void;
 }) {
   const isEditing = !!user;
-  
-  interface UserFormData {
-    name: string;
-    email: string;
-    password: string;
-    role: string;
-    status: string;
-  }
   
   const [formData, setFormData] = useState<UserFormData>(
     user ? 
@@ -234,20 +236,41 @@ function DeleteConfirmationModal({
 
 export default function UsersPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
   
+  // Check if user is admin, redirect if not
+  useEffect(() => {
+    if (user && user.role !== 'Admin') {
+      alert('Access denied. User management is only available to admin users.');
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+  
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
   // API hooks
-  const { data: users, isLoading, error } = useGetUsersQuery({ search: searchTerm });
+  const { data: users, isLoading, error } = useGetUsersQuery({ search: debouncedSearchTerm });
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUserMutation, { isLoading: isDeleting }] = useDeleteUserMutation();
   
   // Handle user form submission (create/edit)
-  const handleUserFormSubmit = async (userData: any) => {
+  const handleUserFormSubmit = async (userData: UserFormData) => {
     try {
+      console.log("Submitting user data:", userData);
+      
       if (editUser) {
         // Update existing user
         await updateUser({
@@ -255,14 +278,73 @@ export default function UsersPage() {
           userId: editUser.userId
         }).unwrap();
         setEditUser(null);
+        
+        // Show success message
+        alert(`User ${userData.name} was successfully updated`);
       } else {
-        // Create new user
-        await createUser(userData).unwrap();
+        // For new users, password is required
+        if (!userData.password) {
+          alert('Password is required for new users');
+          return;
+        }
+        
+        // Create new user - ensure password is not undefined for new users
+        await createUser({
+          name: userData.name,
+          email: userData.email,
+          password: userData.password,
+          role: userData.role,
+          status: userData.status
+        }).unwrap();
         setIsCreateModalOpen(false);
+        
+        // Show success message
+        alert(`User ${userData.name} was successfully created`);
       }
-    } catch (err) {
-      console.error('Failed to save user:', err);
-      // Here you would typically show an error notification
+    } catch (error) {
+      console.error('Failed to save user:', error);
+      
+      // Extract error message for user display
+      let errorMessage = 'Failed to save user. Please try again.';
+      
+      // Check if the error has data with message
+      if (error && typeof error === 'object') {
+        if ('data' in error && error.data) {
+          if (typeof error.data === 'string') {
+            // Try to parse HTML error messages
+            if (error.data.includes('Cannot POST')) {
+              errorMessage = 'The server could not process your request. The user creation endpoint may not be configured correctly.';
+            } else {
+              errorMessage = 'Server error: ' + error.data.replace(/<[^>]*>/g, '').trim();
+            }
+          } else if (typeof error.data === 'object' && 'message' in error.data) {
+            errorMessage = typeof error.data.message === 'string' 
+              ? error.data.message 
+              : 'Unknown error occurred';
+          }
+        }
+        
+        // Check status code for more specific errors
+        if ('status' in error) {
+          if (error.status === 400) {
+            errorMessage = 'Please fill in all required fields.';
+          } else if (error.status === 401) {
+            errorMessage = 'Authentication failed. Please log out and log back in to refresh your session.';
+            // Check if token is missing entirely
+            const token = localStorage.getItem('token');
+            if (!token) {
+              errorMessage = 'You are not logged in. Please log in to perform this action.';
+            }
+          } else if (error.status === 403) {
+            errorMessage = 'You do not have permission to create or modify users. This action requires admin privileges.';
+          } else if (error.status === 409) {
+            errorMessage = 'A user with this email already exists.';
+          }
+        }
+      }
+      
+      // Display the error to the user
+      alert(errorMessage);
     }
   };
   
@@ -273,9 +355,44 @@ export default function UsersPage() {
     try {
       await deleteUserMutation(deleteUser.userId).unwrap();
       setDeleteUser(null);
-    } catch (err) {
-      console.error('Failed to delete user:', err);
-      // Here you would typically show an error notification
+      
+      // Show success message (you can replace this with a toast notification library later)
+      alert(`User ${deleteUser.name} was successfully deleted`);
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      
+      // Extract error message for user display
+      let errorMessage = 'Failed to delete user. Please try again.';
+      
+      // Check if the error has data with message
+      if (error && typeof error === 'object') {
+        if ('data' in error && error.data) {
+          if (typeof error.data === 'string') {
+            // Try to parse HTML error messages
+            if (error.data.includes('Cannot DELETE')) {
+              errorMessage = 'The server could not process your delete request. The user may not exist or you may not have permission.';
+            } else {
+              errorMessage = 'Server error: ' + error.data.replace(/<[^>]*>/g, '').trim();
+            }
+          } else if (typeof error.data === 'object' && 'message' in error.data) {
+            errorMessage = typeof error.data.message === 'string' 
+              ? error.data.message 
+              : 'Unknown error occurred';
+          }
+        }
+        
+        // Check status code
+        if ('status' in error) {
+          if (error.status === 404) {
+            errorMessage = 'User not found. It may have been already deleted.';
+          } else if (error.status === 403) {
+            errorMessage = 'You do not have permission to delete this user.';
+          }
+        }
+      }
+      
+      // Display the error to the user
+      alert(errorMessage);
     }
   };
 
@@ -304,7 +421,27 @@ export default function UsersPage() {
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="text-gray-400 hover:text-gray-600 mr-2"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
+              {debouncedSearchTerm && (
+                <div className="mt-2 text-sm text-gray-500">
+                  {isLoading ? (
+                    <span>Searching for "{debouncedSearchTerm}"...</span>
+                  ) : users?.length === 0 ? (
+                    <span>No results found for "{debouncedSearchTerm}"</span>
+                  ) : (
+                    <span>Showing results for "{debouncedSearchTerm}"</span>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="flex items-center space-x-3">

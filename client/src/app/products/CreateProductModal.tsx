@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import { useGetCategoriesQuery } from "@/state/api";
 import ImageUploader from "@/app/components/ImageUploader";
 
@@ -22,36 +21,32 @@ interface CreateProductModalProps {
   onCreate: (productData: ProductFormData) => void;
 }
 
+// Default empty form state
+const DEFAULT_FORM_STATE: ProductFormData = {
+  name: "",
+  price: 0,
+  stockQuantity: 0,
+  rating: 0,
+  imageUrl: "",
+  category: "",
+  tags: "",
+  description: ""
+};
+
 export default function CreateProductModal({ isOpen, onClose, onCreate }: CreateProductModalProps) {
   const { data: categories } = useGetCategoriesQuery();
   
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: "",
-    price: 0,
-    stockQuantity: 0,
-    rating: 0,
-    imageUrl: "",
-    category: "",
-    tags: "",
-    description: ""
-  });
+  const [formData, setFormData] = useState<ProductFormData>({...DEFAULT_FORM_STATE});
   
   const [newCategory, setNewCategory] = useState("");
   const [showNewCategory, setShowNewCategory] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
-      setFormData({
-        name: "",
-        price: 0,
-        stockQuantity: 0,
-        rating: 0,
-        imageUrl: "",
-        category: "",
-        tags: "",
-        description: ""
-      });
+      setFormData({...DEFAULT_FORM_STATE});
+      setNewCategory("");
+      setShowNewCategory(false);
     }
   }, [isOpen]);
 
@@ -97,16 +92,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreate }: Create
     onCreate(updatedData);
     
     // Reset form
-    setFormData({
-      name: "",
-      price: 0,
-      stockQuantity: 0,
-      rating: 0,
-      imageUrl: "",
-      category: "",
-      tags: "",
-      description: ""
-    });
+    setFormData({...DEFAULT_FORM_STATE});
     setNewCategory("");
     setShowNewCategory(false);
     setIsLoading(false);

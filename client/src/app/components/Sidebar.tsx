@@ -1,140 +1,188 @@
 "use client";
 
+import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { 
-  Home, 
-  Package, 
-  BarChart2, 
-  Users, 
-  Settings, 
-  FileText, 
-  CreditCard, 
-  LogOut, 
-  X, 
-  DollarSign 
+  Home, Package, Users, ShoppingCart, BarChart2, 
+  Settings, LogOut, ChevronLeft, Menu, User, X, HelpCircle
 } from 'lucide-react';
+import { useAppSelector } from '@/app/redux';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
-  const pathname = usePathname();
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const router = useRouter();
+  const { logout } = useAuth();
+  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  const isActive = (path: string) => {
-    return pathname === path || pathname?.startsWith(path + '/');
+  // Handle logout action
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+    onClose(); // Close the sidebar after logout
   };
 
-  const menuItems = [
-    { path: '/dashboard', name: 'Dashboard', icon: <Home className="w-5 h-5" /> },
-    { path: '/products', name: 'Products', icon: <Package className="w-5 h-5" /> },
-    { path: '/users', name: 'Users', icon: <Users className="w-5 h-5" /> },
-    { path: '/expenses', name: 'Expenses', icon: <DollarSign className="w-5 h-5" /> },
-    { path: '/reports', name: 'Reports', icon: <FileText className="w-5 h-5" /> },
-    { path: '/analytics', name: 'Analytics', icon: <BarChart2 className="w-5 h-5" /> },
-    { path: '/settings', name: 'Settings', icon: <Settings className="w-5 h-5" /> },
-  ];
+  // Handle clicking on mobile sidebar links
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768) {
+      onClose();
+    }
+  };
+
+  // Get current route
+  const isClient = typeof window !== 'undefined';
+  const pathname = isClient ? window.location.pathname : '';
+
+  const isActive = (path: string) => {
+    return pathname === path;
+  };
 
   return (
     <>
-      {/* Desktop Sidebar - fixed on the left */}
-      <div className="hidden md:flex md:flex-col md:fixed md:inset-y-0 z-30">
-        <div className="flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full">
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory App</span>
-            </div>
-          </div>
-          
-          <div className="flex flex-col justify-between flex-1 overflow-y-auto">
-            <nav className="flex-1 px-2 py-4 space-y-1">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors ${
-                    isActive(item.path)
-                      ? "bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                      : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {item.icon}
-                  <span className="ml-3">{item.name}</span>
-                </Link>
-              ))}
-            </nav>
-            
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                onClick={() => alert("Logout functionality would go here")}
-              >
-                <LogOut className="w-5 h-5 mr-3" />
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile Sidebar - slide over */}
+      {/* Mobile sidebar backdrop */}
       {isOpen && (
-        <div className="md:hidden fixed inset-0 flex z-40">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={onClose}></div>
-          
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white dark:bg-gray-800 shadow-xl">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
-              <button
-                type="button"
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                onClick={onClose}
+        <div 
+          className="fixed inset-0 z-20 bg-black bg-opacity-50 md:hidden"
+          onClick={onClose}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform duration-300 ease-in-out transform ${
+        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      } w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-2">
+            <div className="bg-blue-600 text-white p-2 rounded-md">
+              <Package className="w-5 h-5" />
+            </div>
+            <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory Pro</span>
+          </div>
+          <button 
+            className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            onClick={onClose}
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Sidebar content */}
+        <div className="py-4 px-3">
+          <nav className="space-y-1">
+            <Link href="/dashboard">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/dashboard') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
               >
-                <X className="h-6 w-6 text-white" />
+                <BarChart2 className="w-5 h-5 mr-3" />
+                Dashboard
+              </div>
+            </Link>
+
+            <Link href="/products">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/products') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <Package className="w-5 h-5 mr-3" />
+                Products
+              </div>
+            </Link>
+
+            <Link href="/products/bulk-update">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/products/bulk-update') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <ShoppingCart className="w-5 h-5 mr-3" />
+                Bulk Update
+              </div>
+            </Link>
+
+            <Link href="/users">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/users') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <Users className="w-5 h-5 mr-3" />
+                Users
+              </div>
+            </Link>
+
+            <Link href="/help">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/help') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <HelpCircle className="w-5 h-5 mr-3" />
+                Help
+              </div>
+            </Link>
+
+            <Link href="/settings">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/settings') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <Settings className="w-5 h-5 mr-3" />
+                Settings
+              </div>
+            </Link>
+          </nav>
+          
+          {/* Sidebar footer */}
+          <div className="absolute bottom-0 left-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
+                  <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                </div>
+                <div className="text-sm">
+                  <p className="font-medium text-gray-700 dark:text-gray-300">Admin User</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
-            </div>
-            
-            <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center">
-                <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory App</span>
-              </div>
-            </div>
-            
-            <div className="flex-1 h-0 overflow-y-auto">
-              <nav className="px-2 py-4 space-y-1">
-                {menuItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors ${
-                      isActive(item.path)
-                        ? "bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                        : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                    }`}
-                    onClick={onClose}
-                  >
-                    {item.icon}
-                    <span className="ml-3">{item.name}</span>
-                  </Link>
-                ))}
-              </nav>
-              
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                  onClick={() => alert("Logout functionality would go here")}
-                >
-                  <LogOut className="w-5 h-5 mr-3" />
-                  Logout
-                </button>
-              </div>
             </div>
           </div>
         </div>
-      )}
+      </aside>
     </>
   );
-};
-
-export default Sidebar; 
+} 

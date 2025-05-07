@@ -20,14 +20,20 @@ import {
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/app/redux';
 import { setIsDarkMode } from '@/state';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { user, logout } = useAuth();
 
   // Add dark mode state and toggle
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
@@ -61,6 +67,11 @@ export default function Header() {
     // Reset search state
     setSearchTerm('');
     setIsSearchOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
   };
 
   const isActive = (path: string) => {
@@ -156,7 +167,10 @@ export default function Header() {
               <button className="flex items-center p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                 <User className="w-5 h-5" />
               </button>
-              <button className="ml-1 p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button 
+                onClick={handleLogout}
+                className="ml-1 p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 <LogOut className="w-5 h-5" />
               </button>
             </div>
@@ -179,7 +193,10 @@ export default function Header() {
           {/* Mobile menu button */}
           <div className="md:hidden">
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => {
+                setIsMenuOpen(!isMenuOpen);
+                if (onMenuClick) onMenuClick();
+              }}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               aria-expanded="false"
             >
@@ -221,8 +238,12 @@ export default function Header() {
                 </div>
               </div>
               <div className="ml-3">
-                <div className="text-base font-medium text-gray-800 dark:text-white">Admin User</div>
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">admin@example.com</div>
+                <div className="text-base font-medium text-gray-800 dark:text-white">
+                  {user?.name || 'User'}
+                </div>
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {user?.email || 'user@example.com'}
+                </div>
               </div>
             </div>
             <div className="mt-3 space-y-1 px-2">
@@ -234,7 +255,10 @@ export default function Header() {
                 <Settings className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Settings
               </button>
-              <button className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
+              <button 
+                onClick={handleLogout}
+                className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full"
+              >
                 <LogOut className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
                 Sign out
               </button>

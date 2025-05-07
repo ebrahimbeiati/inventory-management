@@ -2,7 +2,7 @@
 
 import { useGetProductsQuery, useCreateProductMutation, useGetCategoriesQuery, useGetTagsQuery, useDeleteProductMutation, Product } from "@/state/api";
 import { PlusCircle, SearchIcon, ImageIcon, Download, Filter, ListChecks, Trash2, AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import CreateProductModal from "./CreateProductModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import InventoryStats from "./InventoryStats";
@@ -160,30 +160,41 @@ export default function Products() {
             )
         ].join("\n");
         
-        // Create download link
+        // Create download link using Blob
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
+        
+        // Create and use a temporary link element
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "products.csv");
-        link.style.visibility = "hidden";
+        link.href = url;
+        link.download = "products.csv";
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        
+        // Cleanup: remove the link element and revoke the Blob URL
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }, 100);
     };
 
-    const sortedProducts = products ? [...products].sort((a, b) => {
-        switch(sortBy) {
-            case "price":
-                return a.price - b.price;
-            case "stock":
-                return a.stockQuantity - b.stockQuantity;
-            case "rating":
-                return (a.rating || 0) - (b.rating || 0);
-            default:
-                return a.name.localeCompare(b.name);
-        }
-    }) : [];
+    // Use useMemo to prevent unnecessary re-sorting on every render
+    const sortedProducts = useMemo(() => {
+        if (!products) return [];
+        
+        return [...products].sort((a, b) => {
+            switch(sortBy) {
+                case "price":
+                    return a.price - b.price;
+                case "stock":
+                    return a.stockQuantity - b.stockQuantity;
+                case "rating":
+                    return (a.rating || 0) - (b.rating || 0);
+                default:
+                    return a.name.localeCompare(b.name);
+            }
+        });
+    }, [products, sortBy]);
 
     // Helper function to update URL with search parameters
     const updateURLWithSearchParams = (params: { search?: string, category?: string, tag?: string }) => {
@@ -196,14 +207,18 @@ export default function Products() {
         router.push(url, { scroll: false });
     };
 
-    // New function to clear URL parameters without affecting state
+    // More efficient function to clear URL parameters without affecting state
     const clearURLParams = () => {
-        router.push('/products', { scroll: false });
+        // Use replaceState instead of router.push to avoid creating a new history entry
+        window.history.replaceState({}, '', '/products');
     };
 
     // Modified function to open modal and clear URL params
     const openCreateModal = () => {
-        clearURLParams();
+        // Only clear URL if we have search parameters
+        if (searchTerm || selectedCategory || selectedTag) {
+            clearURLParams();
+        }
         setIsModalOpen(true);
     };
 

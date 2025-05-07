@@ -17,6 +17,11 @@ model Users {
   userId    String   @id @default(uuid())
   name      String
   email     String   @unique
+  password  String
+  role      String   @default("Employee")
+  status    String   @default("Active")
+  createdAt String?
+  lastLogin String?
 }
 
 model Products {

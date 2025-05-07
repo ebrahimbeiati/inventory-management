@@ -37,7 +37,6 @@ const ProductTable = ({
   toggleProductSelection 
 }: ProductTableProps) => {
   const router = useRouter();
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   const getStockStatus = (quantity: number) => {
     if (quantity === 0) {
@@ -315,11 +314,7 @@ const ProductTable = ({
                 return (
                   <tr 
                     key={product.productId} 
-                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 ${
-                      hoveredRow === product.productId ? 'bg-gray-50 dark:bg-gray-700' : ''
-                    }`}
-                    onMouseEnter={() => setHoveredRow(product.productId)}
-                    onMouseLeave={() => setHoveredRow(null)}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
                   >
                     <td className="px-4 py-3 whitespace-nowrap">
                       <input
