@@ -75,7 +75,20 @@ export interface NewUser {
 }
 
 export const api = createApi({
-  baseQuery: fetchBaseQuery({ baseUrl: process.env.NEXT_PUBLIC_API_URL }),
+  baseQuery: fetchBaseQuery({ 
+    baseUrl: process.env.NEXT_PUBLIC_API_URL,
+    prepareHeaders: (headers, { getState }) => {
+      // Get the token from localStorage
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      // If we have a token, add it to the Authorization header
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      
+      return headers;
+    }
+  }),
   reducerPath: "api",
   tagTypes: ["DashboardMetrics", "Products", "Users", "Expenses", "Categories", "Tags"],
   endpoints: (build) => ({

@@ -1,18 +1,12 @@
 "use client";
 
 import { useGetProductsQuery } from "@/state/api";
-import { 
-  TrendingDown, 
-  TrendingUp, 
+import {  
   AlertTriangle, 
   DollarSign, 
   Package, 
   BarChart3,
   PercentIcon,
-  ShoppingCart,
-  ArrowUpRight,
-  ArrowDownRight,
-  CheckCircle,
   AlertOctagon
 } from "lucide-react";
 import { useRouter } from "next/navigation";

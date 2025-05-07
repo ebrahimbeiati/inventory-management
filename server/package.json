@@ -8,7 +8,9 @@
     "seed": "ts-node prisma/seed.ts",
     "build": "rimraf dist && npx tsc",
     "start": "nodemon --exec ts-node src/index.ts",
-    "dev": "concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\""
+    "dev": "concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\"",
+    "create-admin": "ts-node src/scripts/createAdminUser.ts",
+    "create-ebrahim-admin": "ts-node src/scripts/createEbrahimAdmin.ts"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +24,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "prisma": "^6.7.0",
     "rimraf": "^6.0.1",
@@ -30,6 +33,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.15.3",
     "@types/uuid": "^10.0.0",
