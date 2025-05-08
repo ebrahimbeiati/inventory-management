@@ -133,6 +133,9 @@ jobs:
             unzip -o deploy.zip && \
             cd client && npm ci --production && \
             cd ../server && npm ci --production && \
+            npm install bcrypt && \
+            npx prisma generate && \
+            npm run seed || echo 'Seeding skipped' && \
             pm2 restart all"
       
       # For an ECS deployment
