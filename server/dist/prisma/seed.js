@@ -43,7 +43,7 @@ function deleteAllData() {
         ];
         for (const modelName of deleteOrder) {
             try {
-                const model = prisma[modelName.toLowerCase()];
+                const model = prisma[modelName.charAt(0).toLowerCase() + modelName.slice(1)];
                 if (model) {
                     yield model.deleteMany({});
                     console.log(`Cleared data from ${modelName}`);
