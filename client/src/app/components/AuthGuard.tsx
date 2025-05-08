@@ -13,7 +13,8 @@ const PUBLIC_ROUTES = [
   '/analytics',          // Analytics page
   '/reports',            // Reports page
   '/help',               // Help page
-  '/settings'            // Settings page
+  '/settings',           // Settings page
+  '/dashboard'           // Dashboard page
 ];
 
 interface AuthGuardProps {
