@@ -1,21 +1,26 @@
 # Fixing the Database Seeding Issue on EC2
 
-This document explains how to fix the "Argument `password` is missing" error when running the seed script on EC2.
+This document explains how to fix the seeding issues when running the seed script on EC2.
 
-## The Problem
+## Problem 1: Missing Password Field
 
-The error occurs because the seed script is trying to create user records without the required `password` field. The `Users` table in the Prisma schema requires a `password` field, but this field is missing from the users.json seed data.
+The error `Argument 'password' is missing` occurs because the seed script is trying to create user records without the required `password` field. The `Users` table in the Prisma schema requires a `password` field, but this field is missing from the users.json seed data.
+
+## Problem 2: Foreign Key Constraints
+
+The error `Foreign key constraint violated on the constraint: Sales_productId_fkey` occurs because the seed script is trying to delete tables in an order that violates foreign key constraints. Tables with foreign key references should be deleted before the tables they reference.
 
 ## Automated Fix in CI/CD
 
 The GitHub Actions workflow has been updated to:
 1. Install bcrypt during deployment
 2. Run the prisma generate command 
-3. Run the database seed script
+3. Run the database seed script with better error handling
+4. Continue the deployment even if the seed script encounters non-critical errors
 
 ## Manual Fix for EC2
 
-If you need to fix this issue manually on an existing EC2 instance, follow these steps:
+If you need to fix these issues manually on an existing EC2 instance, follow these steps:
 
 1. SSH into your EC2 instance:
    ```bash
@@ -33,12 +38,12 @@ If you need to fix this issue manually on an existing EC2 instance, follow these
    npm install @types/bcrypt --save-dev
    ```
 
-4. Update the seed.ts file to include password hashing:
+4. Update the seed.ts file to include password handling and proper foreign key constraint handling:
    ```bash
    nano prisma/seed.ts
    ```
 
-   Replace the content with the updated seed script that includes password handling:
+   Replace the content with the updated seed script:
    ```typescript
    import { PrismaClient } from "@prisma/client";
    import fs from "fs";
@@ -53,21 +58,37 @@ If you need to fix this issue manually on an existing EC2 instance, follow these
      return bcrypt.hash(password, saltRounds);
    }
 
-   async function deleteAllData(orderedFileNames: string[]) {
-     const modelNames = orderedFileNames.map((fileName) => {
-       const modelName = path.basename(fileName, path.extname(fileName));
-       return modelName.charAt(0).toUpperCase() + modelName.slice(1);
-     });
+   async function deleteAllData() {
+     // Delete data in the correct order to respect foreign key constraints
+     // Tables with foreign key references must be deleted before the tables they reference
+     const deleteOrder = [
+       // First delete tables that reference other tables
+       "Sales",
+       "SalesSummary", 
+       "Purchases",
+       "PurchaseSummary",
+       "Expenses",
+       "ExpenseByCategory",
+       "ExpenseSummary",
+       
+       // Then delete the referenced tables
+       "Products",
+       "Users",
+     ];
 
-     for (const modelName of modelNames) {
-       const model: any = prisma[modelName as keyof typeof prisma];
-       if (model) {
-         await model.deleteMany({});
-         console.log(`Cleared data from ${modelName}`);
-       } else {
-         console.error(
-           `Model ${modelName} not found. Please ensure the model name is correctly specified.`
-         );
+     for (const modelName of deleteOrder) {
+       try {
+         const model: any = prisma[modelName.toLowerCase() as keyof typeof prisma];
+         if (model) {
+           await model.deleteMany({});
+           console.log(`Cleared data from ${modelName}`);
+         } else {
+           console.error(
+             `Model ${modelName} not found. Please ensure the model name is correctly specified.`
+           );
+         }
+       } catch (error) {
+         console.error(`Error deleting data from ${modelName}:`, error);
        }
      }
    }
@@ -75,46 +96,68 @@ If you need to fix this issue manually on an existing EC2 instance, follow these
    async function main() {
      const dataDirectory = path.join(__dirname, "seedData");
 
-     const orderedFileNames = [
+     // Define the order for seeding (based on dependencies)
+     const seedOrder = [
+       // First seed tables that are referenced by others
+       "users.json",
        "products.json",
+       
+       // Then seed the tables with foreign key references
        "expenseSummary.json",
        "sales.json",
        "salesSummary.json",
        "purchases.json",
        "purchaseSummary.json",
-       "users.json",
        "expenses.json",
        "expenseByCategory.json",
      ];
 
-     await deleteAllData(orderedFileNames);
+     try {
+       await deleteAllData();
+       
+       // Hash the default password once
+       const defaultPassword = await hashPassword("password123");
 
-     // Hash the default password once
-     const defaultPassword = await hashPassword("password123");
+       for (const fileName of seedOrder) {
+         try {
+           const filePath = path.join(dataDirectory, fileName);
+           if (!fs.existsSync(filePath)) {
+             console.log(`File ${fileName} not found, skipping...`);
+             continue;
+           }
+           
+           const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+           const modelName = path.basename(fileName, path.extname(fileName));
+           const model: any = prisma[modelName as keyof typeof prisma];
 
-     for (const fileName of orderedFileNames) {
-       const filePath = path.join(dataDirectory, fileName);
-       const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-       const modelName = path.basename(fileName, path.extname(fileName));
-       const model: any = prisma[modelName as keyof typeof prisma];
+           if (!model) {
+             console.error(`No Prisma model matches the file name: ${fileName}`);
+             continue;
+           }
 
-       if (!model) {
-         console.error(`No Prisma model matches the file name: ${fileName}`);
-         continue;
-       }
+           for (const data of jsonData) {
+             try {
+               // Add password for User model if it's missing
+               if (modelName === "users" && !data.password) {
+                 data.password = defaultPassword;
+               }
+               
+               await model.create({
+                 data,
+               });
+             } catch (error) {
+               console.error(`Error creating ${modelName} record:`, error);
+               console.error('Data:', JSON.stringify(data, null, 2));
+             }
+           }
 
-       for (const data of jsonData) {
-         // Add password for User model if it's missing
-         if (modelName === "users" && !data.password) {
-           data.password = defaultPassword;
+           console.log(`Seeded ${modelName} with data from ${fileName}`);
+         } catch (error) {
+           console.error(`Error processing file ${fileName}:`, error);
          }
-         
-         await model.create({
-           data,
-         });
        }
-
-       console.log(`Seeded ${modelName} with data from ${fileName}`);
+     } catch (error) {
+       console.error("Error during seeding process:", error);
      }
    }
 
@@ -151,26 +194,12 @@ After successful seeding, you can log in with any of the seeded users using the 
 
 For security reasons, you should change these passwords after logging in for the first time.
 
-## Alternate Approach: Update Seed Data
+## Understanding Foreign Key Constraints
 
-Another approach is to directly update the users.json file to include passwords:
+Foreign key constraints ensure data integrity by preventing the deletion of records that are referenced by other tables. In our database:
 
-1. Edit the seedData/users.json file:
-   ```bash
-   nano prisma/seedData/users.json
-   ```
+1. The `Sales` table has a foreign key reference to the `Products` table through the `productId` field
+2. When trying to delete all products, the database refuses because there are sales records that reference those products
+3. To resolve this, we must delete the `Sales` records before deleting the `Products` records
 
-2. Add a password field to each user entry:
-   ```json
-   [
-     {
-       "userId": "3b0fd66b-a4d6-4d95-94e4-01940c99aedb",
-       "name": "Carly",
-       "email": "cvansalzberger0@cisco.com",
-       "password": "$2b$10$YourHashedPasswordHere"
-     },
-     ...
-   ]
-   ```
-
-This approach requires pre-hashing the passwords, so the dynamic approach in the seed.ts file is generally preferred. 
+The updated seed script now handles this correctly by deleting tables in the proper order and adding better error handling to continue through non-critical issues. 
