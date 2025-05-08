@@ -12,6 +12,7 @@ import {
   NewUser
 } from '@/state/api';
 import { useAuth } from '@/hooks/useAuth';
+import { isAdmin } from '@/utils/auth';
 
 // Define the user form data type
 interface UserFormData {
@@ -235,21 +236,22 @@ function DeleteConfirmationModal({
 }
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const isUserAdmin = isAdmin(currentUser);
   const router = useRouter();
-  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editUser, setEditUser] = useState<User | null>(null);
-  const [deleteUser, setDeleteUser] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
   // Check if user is admin, redirect if not
   useEffect(() => {
-    if (user && user.role !== 'Admin') {
+    if (currentUser && currentUser.role !== 'Admin') {
       alert('Access denied. User management is only available to admin users.');
       router.push('/dashboard');
     }
-  }, [user, router]);
+  }, [currentUser, router]);
   
   // Debounce search term
   useEffect(() => {
@@ -264,20 +266,25 @@ export default function UsersPage() {
   const { data: users, isLoading, error } = useGetUsersQuery({ search: debouncedSearchTerm });
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
-  const [deleteUserMutation, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
   
   // Handle user form submission (create/edit)
   const handleUserFormSubmit = async (userData: UserFormData) => {
+    if (!isUserAdmin) {
+      alert('Only administrators can manage users');
+      return;
+    }
+
     try {
       console.log("Submitting user data:", userData);
       
-      if (editUser) {
+      if (selectedUser) {
         // Update existing user
         await updateUser({
-          ...userData,
-          userId: editUser.userId
+          userId: selectedUser.userId,
+          ...userData
         }).unwrap();
-        setEditUser(null);
+        setSelectedUser(null);
         
         // Show success message
         alert(`User ${userData.name} was successfully updated`);
@@ -289,14 +296,8 @@ export default function UsersPage() {
         }
         
         // Create new user - ensure password is not undefined for new users
-        await createUser({
-          name: userData.name,
-          email: userData.email,
-          password: userData.password,
-          role: userData.role,
-          status: userData.status
-        }).unwrap();
-        setIsCreateModalOpen(false);
+        await createUser(userData).unwrap();
+        setIsModalOpen(false);
         
         // Show success message
         alert(`User ${userData.name} was successfully created`);
@@ -350,14 +351,20 @@ export default function UsersPage() {
   
   // Handle user deletion
   const handleUserDelete = async () => {
-    if (!deleteUser) return;
+    if (!isUserAdmin) {
+      alert('Only administrators can delete users');
+      return;
+    }
+
+    if (!selectedUser) return;
     
     try {
-      await deleteUserMutation(deleteUser.userId).unwrap();
-      setDeleteUser(null);
+      await deleteUser(selectedUser.userId).unwrap();
+      setIsDeleteModalOpen(false);
+      setSelectedUser(null);
       
       // Show success message (you can replace this with a toast notification library later)
-      alert(`User ${deleteUser.name} was successfully deleted`);
+      alert(`User ${selectedUser.name} was successfully deleted`);
     } catch (error) {
       console.error('Failed to delete user:', error);
       
@@ -445,14 +452,16 @@ export default function UsersPage() {
             </div>
             
             <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                disabled={isCreating}
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add User
-              </button>
+              {isUserAdmin && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                  disabled={isCreating}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Add User
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -531,26 +540,31 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent row click
-                            setEditUser(user);
-                          }}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
-                          disabled={isUpdating}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent row click
-                            setDeleteUser(user);
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                          disabled={isDeleting}
-                        >
-                          Delete
-                        </button>
+                        {isUserAdmin && (
+                          <>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click
+                                setSelectedUser(user);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 mr-3"
+                              disabled={isUpdating}
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click
+                                setSelectedUser(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                              className="text-red-600 hover:text-red-900"
+                              disabled={isUpdating}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -568,23 +582,28 @@ export default function UsersPage() {
       </div>
       
       {/* User create/edit modal */}
-      <UserFormModal 
-        isOpen={isCreateModalOpen || !!editUser} 
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setEditUser(null);
-        }}
-        user={editUser}
-        onSubmit={handleUserFormSubmit}
-      />
+      {isUserAdmin && (
+        <UserFormModal 
+          isOpen={isModalOpen || !!selectedUser} 
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedUser(null);
+          }}
+          user={selectedUser}
+          onSubmit={handleUserFormSubmit}
+        />
+      )}
       
       {/* Delete confirmation modal */}
-      {deleteUser && (
+      {isUserAdmin && (
         <DeleteConfirmationModal
-          isOpen={!!deleteUser}
-          onClose={() => setDeleteUser(null)}
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedUser(null);
+          }}
           onConfirm={handleUserDelete}
-          userName={deleteUser.name}
+          userName={selectedUser?.name || ''}
         />
       )}
     </div>

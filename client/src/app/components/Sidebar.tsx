@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Home, Package, Users, ShoppingCart, BarChart2, 
-  Settings, LogOut, ChevronLeft, Menu, User, X, HelpCircle
+  Settings, LogOut, ChevronLeft, Menu, User, X, HelpCircle,
+  LineChart, FileText
 } from 'lucide-react';
 import { useAppSelector } from '@/app/redux';
 import { useAuth } from '@/hooks/useAuth';
@@ -128,6 +129,34 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <Users className="w-5 h-5 mr-3" />
                 Users
+              </div>
+            </Link>
+
+            <Link href="/analytics">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/analytics') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <LineChart className="w-5 h-5 mr-3" />
+                Analytics
+              </div>
+            </Link>
+
+            <Link href="/reports">
+              <div 
+                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isActive('/reports') 
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <FileText className="w-5 h-5 mr-3" />
+                Reports
               </div>
             </Link>
 

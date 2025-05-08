@@ -1,110 +1,124 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Header from "@/app/(components)/Header";
-import { useAppSelector, useAppDispatch } from "@/app/redux";
-import { setIsDarkMode } from "@/state";
+import { Bell, Eye, Info } from "lucide-react";
 
-type UserSetting = {
+type Setting = {
+  id: string;
   label: string;
+  description: string;
   value: string | boolean;
-  type: "text" | "toggle";
+  type: "toggle" | "select";
+  icon: JSX.Element;
+  options?: string[];
 };
 
 const Settings = () => {
-  // Get the dark mode state from Redux
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const dispatch = useAppDispatch();
-
-  // Initial settings with mock data
-  const initialSettings: UserSetting[] = [
-    { label: "Username", value: "john doe", type: "text" },
-    { label: "Email", value: "john.doe@example.com", type: "text" },
-    { label: "Notification", value: true, type: "toggle" },
-    { label: "Dark Mode", value: isDarkMode, type: "toggle" }, // Connect to Redux state
-    { label: "Language", value: "English", type: "text" },
+  const initialSettings: Setting[] = [
+    {
+      id: "notifications",
+      label: "Notifications",
+      description: "Enable or disable system notifications",
+      value: true,
+      type: "toggle",
+      icon: <Bell className="w-5 h-5" />
+    },
+    {
+      id: "accessibility",
+      label: "Accessibility",
+      description: "Enable high contrast mode for better visibility",
+      value: false,
+      type: "toggle",
+      icon: <Eye className="w-5 h-5" />
+    }
   ];
 
-  const [userSettings, setUserSettings] = useState<UserSetting[]>(initialSettings);
+  const [settings, setSettings] = useState<Setting[]>(initialSettings);
 
-  // Update local state when Redux state changes
-  useEffect(() => {
-    setUserSettings(prev => {
+  const handleSettingChange = (id: string, newValue: string | boolean) => {
+    setSettings(prev => {
       const updated = [...prev];
-      const darkModeIndex = updated.findIndex(setting => setting.label === "Dark Mode");
-      if (darkModeIndex !== -1) {
-        updated[darkModeIndex].value = isDarkMode;
+      const settingIndex = updated.findIndex(setting => setting.id === id);
+      if (settingIndex !== -1) {
+        updated[settingIndex].value = newValue;
       }
       return updated;
     });
-  }, [isDarkMode]);
-
-  const handleToggleChange = (index: number) => {
-    const settingsCopy = [...userSettings];
-    const newValue = !settingsCopy[index].value as boolean;
-    settingsCopy[index].value = newValue;
-    setUserSettings(settingsCopy);
-
-    // If it's the Dark Mode toggle, update Redux state
-    if (settingsCopy[index].label === "Dark Mode") {
-      dispatch(setIsDarkMode(newValue));
-    }
   };
 
   return (
     <div className="mx-auto pb-5 w-full px-4 sm:px-6 lg:px-8 ml-0 sm:ml-64">
-      <Header name="User Settings" />
-      <div className="overflow-x-auto mt-5 shadow-md">
-        <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg">
-          <thead className="bg-gray-800 dark:bg-gray-700 text-white">
-            <tr>
-              <th className="text-left py-3 px-4 uppercase font-semibold text-sm">
-                Setting
-              </th>
-              <th className="text-left py-3 px-4 uppercase font-semibold text-sm">
-                Value
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {userSettings.map((setting, index) => (
-              <tr className="hover:bg-blue-50 dark:hover:bg-gray-700" key={setting.label}>
-                <td className="py-2 px-4">{setting.label}</td>
-                <td className="py-2 px-4">
-                  {setting.type === "toggle" ? (
-                    <label className="inline-flex relative items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        checked={setting.value as boolean}
-                        onChange={() => handleToggleChange(index)}
-                      />
-                      <div
-                        className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-blue-400 peer-focus:ring-4 
-                        transition peer-checked:after:translate-x-full peer-checked:after:border-white 
-                        after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white 
-                        after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all
-                        peer-checked:bg-blue-600"
-                      ></div>
-                    </label>
-                  ) : (
+      <Header name="Settings" />
+      
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {settings.map((setting) => (
+          <div 
+            key={setting.id}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  {setting.icon}
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    {setting.label}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {setting.description}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="ml-4">
+                {setting.type === "toggle" ? (
+                  <label className="inline-flex relative items-center cursor-pointer">
                     <input
-                      type="text"
-                      className="px-4 py-2 border rounded-lg text-gray-500 dark:text-gray-300 
-                                dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:border-blue-500"
-                      value={setting.value as string}
-                      onChange={(e) => {
-                        const settingsCopy = [...userSettings];
-                        settingsCopy[index].value = e.target.value;
-                        setUserSettings(settingsCopy);
-                      }}
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={setting.value as boolean}
+                      onChange={() => handleSettingChange(setting.id, !setting.value)}
                     />
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-blue-400 peer-focus:ring-4 
+                      transition peer-checked:after:translate-x-full peer-checked:after:border-white 
+                      after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white 
+                      after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all
+                      peer-checked:bg-blue-600">
+                    </div>
+                  </label>
+                ) : (
+                  <select
+                    value={setting.value as string}
+                    onChange={(e) => handleSettingChange(setting.id, e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-gray-700 dark:text-gray-300 
+                             dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 
+                             focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {setting.options?.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 flex items-start space-x-3">
+        <Info className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5" />
+        <div>
+          <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+            Language Support Coming Soon
+          </h3>
+          <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
+            We're working on adding support for multiple languages. Stay tuned for updates!
+          </p>
+        </div>
       </div>
     </div>
   );

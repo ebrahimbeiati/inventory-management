@@ -1,99 +1,436 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Header from "@/app/(components)/Header";
-import { FilePieChart, FileBarChart, FileSpreadsheet, Download } from "lucide-react";
+import { 
+  FileText, 
+  Download, 
+  Filter, 
+  Calendar, 
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  Share2,
+  Printer,
+  BarChart2,
+  PieChart,
+  LineChart,
+  Table,
+  Check,
+  X,
+  X as CloseIcon
+} from "lucide-react";
 
 const Reports = () => {
-  const reportTypes = [
-    { 
-      title: "Sales Report", 
-      icon: <FilePieChart className="w-10 h-10 text-blue-600" />, 
-      description: "View and download sales data analysis and trends" 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [dateRange, setDateRange] = useState("month");
+  const [expandedReport, setExpandedReport] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+
+  const categories = [
+    { id: "all", name: "All Reports", icon: <FileText className="w-5 h-5" /> },
+    { id: "sales", name: "Sales", icon: <BarChart2 className="w-5 h-5" /> },
+    { id: "inventory", name: "Inventory", icon: <PieChart className="w-5 h-5" /> },
+    { id: "performance", name: "Performance", icon: <LineChart className="w-5 h-5" /> }
+  ];
+
+  const reports = [
+    {
+      id: 1,
+      title: "Monthly Sales Analysis",
+      category: "sales",
+      date: "May 5, 2025",
+      description: "Comprehensive analysis of monthly sales performance, including trends and comparisons.",
+      metrics: {
+        totalSales: "$45,678",
+        growth: "+12.5%",
+        topProduct: "Product A",
+        averageOrder: "$234"
+      },
+      status: "completed",
+      format: "PDF"
     },
-    { 
-      title: "Inventory Status", 
-      icon: <FileBarChart className="w-10 h-10 text-green-600" />, 
-      description: "Complete inventory status with stock levels and movements" 
+    {
+      id: 2,
+      title: "Inventory Status Report",
+      category: "inventory",
+      date: "May 2, 2025",
+      description: "Detailed overview of current inventory levels, stock movements, and reorder recommendations.",
+      metrics: {
+        totalItems: "1,234",
+        lowStock: "23",
+        value: "$89,456",
+        turnover: "4.2x"
+      },
+      status: "completed",
+      format: "Excel"
     },
-    { 
-      title: "Financial Summary", 
-      icon: <FileSpreadsheet className="w-10 h-10 text-purple-600" />, 
-      description: "Revenue, costs, and profit analysis reports" 
+    {
+      id: 3,
+      title: "Performance Metrics",
+      category: "performance",
+      date: "May 1, 2025",
+      description: "Key performance indicators and operational metrics for the current period.",
+      metrics: {
+        efficiency: "92%",
+        uptime: "99.9%",
+        response: "1.2s",
+        satisfaction: "4.8/5"
+      },
+      status: "processing",
+      format: "PDF"
     }
   ];
+
+  const filteredReports = reports.filter(report => {
+    const matchesSearch = report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         report.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || report.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleShare = async (report: any) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: report.title,
+          text: report.description,
+          url: window.location.href
+        });
+        showNotification('success', 'Report shared successfully!');
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        const shareUrl = `${window.location.origin}/reports/${report.id}`;
+        await navigator.clipboard.writeText(shareUrl);
+        showNotification('success', 'Report link copied to clipboard!');
+      }
+    } catch (error) {
+      showNotification('error', 'Failed to share report');
+    }
+  };
+
+  const handlePrint = (report: any) => {
+    try {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>${report.title}</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                .header { margin-bottom: 20px; }
+                .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0; }
+                .metric { text-align: center; }
+                .footer { margin-top: 20px; font-size: 12px; color: #666; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>${report.title}</h1>
+                <p>${report.description}</p>
+                <p>Generated: ${report.date}</p>
+              </div>
+              <div class="metrics">
+                ${Object.entries(report.metrics).map(([key, value]) => `
+                  <div class="metric">
+                    <h3>${key}</h3>
+                    <p>${value}</p>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="footer">
+                <p>Generated by Inventory Management System</p>
+                <p>Date: ${new Date().toLocaleDateString()}</p>
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+        showNotification('success', 'Print preview opened!');
+      }
+    } catch (error) {
+      showNotification('error', 'Failed to open print preview');
+    }
+  };
+
+  const handleDownload = async (report: any) => {
+    try {
+      // Create a formatted content for the report
+      const content = `
+Report: ${report.title}
+Date: ${report.date}
+Format: ${report.format}
+
+Description:
+${report.description}
+
+Metrics:
+${Object.entries(report.metrics).map(([key, value]) => `${key}: ${value}`).join('\n')}
+
+Generated by Inventory Management System
+Date: ${new Date().toLocaleDateString()}
+      `;
+
+      // Create a blob with the content
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${report.title.toLowerCase().replace(/\s+/g, '-')}-${report.date}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      showNotification('success', 'Report downloaded successfully!');
+    } catch (error) {
+      showNotification('error', 'Failed to download report');
+    }
+  };
+
+  const handleView = (report: any) => {
+    setSelectedReport(report);
+  };
+
+  const closeModal = () => {
+    setSelectedReport(null);
+  };
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   return (
     <div className="mx-auto pb-5 w-full px-4 sm:px-6 lg:px-8 ml-0 sm:ml-64">
       <Header name="Reports" />
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {reportTypes.map((report, index) => (
-          <div 
-            key={index} 
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 flex flex-col"
-          >
-            <div className="flex items-center mb-4">
-              {report.icon}
-              <h3 className="ml-3 text-lg font-semibold text-gray-800 dark:text-white">{report.title}</h3>
+      
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg flex items-center gap-2 ${
+          notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white z-50`}>
+          {notification.type === 'success' ? (
+            <Check className="w-5 h-5" />
+          ) : (
+            <X className="w-5 h-5" />
+          )}
+          <span>{notification.message}</span>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="grid grid-cols-12 gap-6 mb-6">
+                <div className="col-span-10">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{selectedReport.title}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 mt-1">{selectedReport.date}</p>
+                </div>
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    onClick={closeModal}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <CloseIcon className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="grid grid-cols-12 gap-6 mb-6">
+                <div className="col-span-12 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Description</h3>
+                  <p className="text-gray-600 dark:text-gray-300">{selectedReport.description}</p>
+                </div>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-12 gap-6 mb-6">
+                {Object.entries(selectedReport.metrics).map(([key, value], index) => (
+                  <div key={key} className="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg h-full">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{key}</p>
+                      <p className="text-xl font-semibold text-gray-800 dark:text-white">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="grid grid-cols-12 gap-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="col-span-12 flex justify-end gap-4">
+                  <button
+                    onClick={() => handleShare(selectedReport)}
+                    className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </button>
+                  <button
+                    onClick={() => handlePrint(selectedReport)}
+                    className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print
+                  </button>
+                  <button
+                    onClick={() => handleDownload(selectedReport)}
+                    className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4 flex-grow">{report.description}</p>
-            <div className="flex justify-between">
-              <button 
-                className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                <span>View Report</span>
-              </button>
-              <button 
-                className="flex items-center text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-              >
-                <Download className="w-4 h-4 mr-1" />
-                <span>Export</span>
-              </button>
+          </div>
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="mt-6 grid grid-cols-12 gap-4 items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="col-span-12 md:col-span-8 flex gap-4 flex-wrap">
+          {/* Search */}
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search reports..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date Range */}
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="week">Last Week</option>
+              <option value="month">Last Month</option>
+              <option value="year">Last Year</option>
+            </select>
+          </div>
+        </div>
+
+        {/* View Toggle */}
+        <div className="col-span-12 md:col-span-4 flex justify-end gap-2">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700"}`}
+          >
+            <Table className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 rounded-lg ${viewMode === "list" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700"}`}
+          >
+            <FileText className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Reports Grid */}
+      <div className="mt-6 grid grid-cols-12 gap-6">
+        {filteredReports.map((report) => (
+          <div
+            key={report.id}
+            className="col-span-12 md:col-span-6 lg:col-span-4"
+          >
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow h-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    {categories.find(cat => cat.id === report.category)?.icon}
+                    <h3 className="ml-2 text-lg font-semibold text-gray-800 dark:text-white">{report.title}</h3>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    report.status === "completed" 
+                      ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
+                  }`}>
+                    {report.status}
+                  </span>
+                </div>
+
+                <p className="text-gray-600 dark:text-gray-300 mb-4">{report.description}</p>
+
+                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <span>{report.date}</span>
+                  <span className="flex items-center">
+                    <FileText className="w-4 h-4 mr-1" />
+                    {report.format}
+                  </span>
+                </div>
+
+                <div className="mt-4 flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button 
+                    onClick={() => handleView(report)}
+                    className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    View
+                  </button>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => handleShare(report)}
+                      className="flex items-center text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
+                    >
+                      <Share2 className="w-4 h-4 mr-1" />
+                      Share
+                    </button>
+                    <button 
+                      onClick={() => handlePrint(report)}
+                      className="flex items-center text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
+                    >
+                      <Printer className="w-4 h-4 mr-1" />
+                      Print
+                    </button>
+                    <button 
+                      onClick={() => handleDownload(report)}
+                      className="flex items-center text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}
-      </div>
-      
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Recent Reports</h2>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Report Name</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Generated</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">Monthly Sales Summary</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">May 5, 2025</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">Sales</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">View</button>
-                    <button className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">Download</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">Inventory Status Report</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">May 2, 2025</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">Inventory</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">View</button>
-                    <button className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">Download</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   );
