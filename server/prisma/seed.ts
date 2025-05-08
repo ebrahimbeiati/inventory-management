@@ -1,7 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
+import bcrypt from "bcrypt";
+
 const prisma = new PrismaClient();
+
+// Function to hash passwords
+async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 10;
+  return bcrypt.hash(password, saltRounds);
+}
 
 async function deleteAllData(orderedFileNames: string[]) {
   const modelNames = orderedFileNames.map((fileName) => {
@@ -39,6 +47,9 @@ async function main() {
 
   await deleteAllData(orderedFileNames);
 
+  // Hash the default password once
+  const defaultPassword = await hashPassword("password123");
+
   for (const fileName of orderedFileNames) {
     const filePath = path.join(dataDirectory, fileName);
     const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -51,6 +62,11 @@ async function main() {
     }
 
     for (const data of jsonData) {
+      // Add password for User model if it's missing
+      if (modelName === "users" && !data.password) {
+        data.password = defaultPassword;
+      }
+      
       await model.create({
         data,
       });
@@ -63,6 +79,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();

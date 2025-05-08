@@ -15,7 +15,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
+// Function to hash passwords
+function hashPassword(password) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const saltRounds = 10;
+        return bcrypt_1.default.hash(password, saltRounds);
+    });
+}
 function deleteAllData(orderedFileNames) {
     return __awaiter(this, void 0, void 0, function* () {
         const modelNames = orderedFileNames.map((fileName) => {
@@ -49,6 +57,8 @@ function main() {
             "expenseByCategory.json",
         ];
         yield deleteAllData(orderedFileNames);
+        // Hash the default password once
+        const defaultPassword = yield hashPassword("password123");
         for (const fileName of orderedFileNames) {
             const filePath = path_1.default.join(dataDirectory, fileName);
             const jsonData = JSON.parse(fs_1.default.readFileSync(filePath, "utf-8"));
@@ -59,6 +69,10 @@ function main() {
                 continue;
             }
             for (const data of jsonData) {
+                // Add password for User model if it's missing
+                if (modelName === "users" && !data.password) {
+                    data.password = defaultPassword;
+                }
                 yield model.create({
                     data,
                 });
@@ -70,6 +84,7 @@ function main() {
 main()
     .catch((e) => {
     console.error(e);
+    process.exit(1);
 })
     .finally(() => __awaiter(void 0, void 0, void 0, function* () {
     yield prisma.$disconnect();
