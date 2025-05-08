@@ -19,9 +19,13 @@ const app = express();
 app.use(cors({
   origin: [
     'https://main.d2muc4pjik0lp8.amplifyapp.com',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'http://56.228.12.112',
+    'https://56.228.12.112'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(helmet());

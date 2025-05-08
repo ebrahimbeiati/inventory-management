@@ -27,6 +27,7 @@ interface ProductTableProps {
   onDelete: (productId: string) => void;
   selectedProducts: string[];
   toggleProductSelection: (productId: string) => void;
+  isAdmin: boolean;
 }
 
 const ProductTable = ({ 
@@ -34,7 +35,8 @@ const ProductTable = ({
   onEdit, 
   onDelete, 
   selectedProducts, 
-  toggleProductSelection 
+  toggleProductSelection,
+  isAdmin 
 }: ProductTableProps) => {
   const router = useRouter();
 
@@ -221,20 +223,24 @@ const ProductTable = ({
                     >
                       <Eye className="w-5 h-5" />
                     </button>
-                    <button
-                      onClick={() => editProduct(product)}
-                      className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 p-1"
-                      title="Edit product"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(product.productId)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1"
-                      title="Delete product"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => editProduct(product)}
+                          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 p-1"
+                          title="Edit product"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => onDelete(product.productId)}
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1"
+                          title="Delete product"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -252,28 +258,30 @@ const ProductTable = ({
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  checked={selectedProducts.length === products.length && products.length > 0}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      products.forEach(product => {
-                        if (!selectedProducts.includes(product.productId)) {
-                          toggleProductSelection(product.productId);
-                        }
-                      });
-                    } else {
-                      products.forEach(product => {
-                        if (selectedProducts.includes(product.productId)) {
-                          toggleProductSelection(product.productId);
-                        }
-                      });
-                    }
-                  }}
-                />
-              </th>
+              {isAdmin && (
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={selectedProducts.length === products.length && products.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        products.forEach(product => {
+                          if (!selectedProducts.includes(product.productId)) {
+                            toggleProductSelection(product.productId);
+                          }
+                        });
+                      } else {
+                        products.forEach(product => {
+                          if (selectedProducts.includes(product.productId)) {
+                            toggleProductSelection(product.productId);
+                          }
+                        });
+                      }
+                    }}
+                  />
+                </th>
+              )}
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Product
               </th>
@@ -316,14 +324,16 @@ const ProductTable = ({
                     key={product.productId} 
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
                   >
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        checked={selectedProducts.includes(product.productId)}
-                        onChange={() => toggleProductSelection(product.productId)}
-                      />
-                    </td>
+                    {isAdmin && (
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          checked={selectedProducts.includes(product.productId)}
+                          onChange={() => toggleProductSelection(product.productId)}
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0 mr-3">
@@ -421,20 +431,24 @@ const ProductTable = ({
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() => editProduct(product)}
-                          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
-                          title="Edit product"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(product.productId)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                          title="Delete product"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => editProduct(product)}
+                              className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                              title="Edit product"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => onDelete(product.productId)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                              title="Delete product"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

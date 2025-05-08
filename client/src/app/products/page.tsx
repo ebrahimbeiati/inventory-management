@@ -7,6 +7,8 @@ import CreateProductModal from "./CreateProductModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import InventoryStats from "./InventoryStats";
 import ProductTable from "./ProductTable";
+import { useAuth } from '@/hooks/useAuth';
+import { isAdmin } from '@/utils/auth';
 
 type ProductFormData = {
     name: string;
@@ -20,6 +22,9 @@ type ProductFormData = {
 }
 
 export default function Products() {
+    const { user } = useAuth();
+    const isUserAdmin = isAdmin(user);
+    
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [sortBy, setSortBy] = useState<string>("name");
@@ -56,6 +61,11 @@ export default function Products() {
     const [deleteProduct] = useDeleteProductMutation();
 
     const handleCreateModal = async (productData: ProductFormData) => {
+        if (!isUserAdmin) {
+            alert('Only administrators can create products');
+            return;
+        }
+
         try {
             // Validate product data before sending to API
             if (!productData.name?.trim()) {
@@ -103,11 +113,19 @@ export default function Products() {
     };
 
     const handleEditProduct = (product: Product) => {
-        // Navigate directly to edit mode by adding edit=true parameter
+        if (!isUserAdmin) {
+            alert('Only administrators can edit products');
+            return;
+        }
         router.push(`/products/${product.productId}?edit=true`);
     };
 
     const handleDeleteProduct = async (productId: string) => {
+        if (!isUserAdmin) {
+            alert('Only administrators can delete products');
+            return;
+        }
+        
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
                 await deleteProduct(productId).unwrap();
@@ -126,8 +144,12 @@ export default function Products() {
     };
 
     const handleDeleteSelected = async () => {
+        if (!isUserAdmin) {
+            alert('Only administrators can delete products');
+            return;
+        }
+
         try {
-            // Delete each selected product one by one
             const deletePromises = selectedProducts.map(productId => 
                 deleteProduct(productId).unwrap()
             );
@@ -344,29 +366,31 @@ export default function Products() {
 
                 {/* Selection and Action Buttons */}
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                    <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            className="mr-2 rounded"
-                            checked={products.length > 0 && selectedProducts.length === products.length}
-                            onChange={() => {
-                                if (selectedProducts.length === products.length) {
-                                    setSelectedProducts([]);
-                                } else {
-                                    setSelectedProducts(products.map(p => p.productId));
-                                }
-                            }}
-                        />
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {selectedProducts.length === 0 
-                                ? "Select All" 
-                                : `${selectedProducts.length} product${selectedProducts.length === 1 ? "" : "s"} selected`}
-                        </span>
-                    </div>
+                    {isUserAdmin && (
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                className="mr-2 rounded"
+                                checked={products.length > 0 && selectedProducts.length === products.length}
+                                onChange={() => {
+                                    if (selectedProducts.length === products.length) {
+                                        setSelectedProducts([]);
+                                    } else {
+                                        setSelectedProducts(products.map(p => p.productId));
+                                    }
+                                }}
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {selectedProducts.length === 0 
+                                    ? "Select All" 
+                                    : `${selectedProducts.length} product${selectedProducts.length === 1 ? "" : "s"} selected`}
+                            </span>
+                        </div>
+                    )}
                     
                     {/* Action Buttons - Stacked on Mobile, Row on Desktop */}
                     <div className="grid grid-cols-2 sm:flex sm:space-x-2 gap-2">
-                        {selectedProducts.length > 0 && (
+                        {isUserAdmin && selectedProducts.length > 0 && (
                             <button
                                 className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
                                 onClick={() => setIsConfirmDeleteOpen(true)}
@@ -384,21 +408,25 @@ export default function Products() {
                             <span>Export</span>
                         </button>
                         
-                        <button
-                            className="flex items-center justify-center bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded"
-                            onClick={() => router.push('/products/bulk-update')}
-                        >
-                            <ListChecks className="w-4 h-4 mr-2" />
-                            <span className="whitespace-nowrap">Bulk Update</span>
-                        </button>
-                        
-                        <button
-                            className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                            onClick={openCreateModal}
-                        >
-                            <PlusCircle className="w-4 h-4 mr-2" />
-                            <span>Add Product</span>
-                        </button>
+                        {isUserAdmin && (
+                            <>
+                                <button
+                                    className="flex items-center justify-center bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded"
+                                    onClick={() => router.push('/products/bulk-update')}
+                                >
+                                    <ListChecks className="w-4 h-4 mr-2" />
+                                    <span className="whitespace-nowrap">Bulk Update</span>
+                                </button>
+                                
+                                <button
+                                    className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                                    onClick={openCreateModal}
+                                >
+                                    <PlusCircle className="w-4 h-4 mr-2" />
+                                    <span>Add Product</span>
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -406,13 +434,15 @@ export default function Products() {
                     <div className="text-center py-16 bg-gray-50 dark:bg-gray-700 rounded-lg flex flex-col items-center">
                         <ImageIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
                         <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">No products found</p>
-                        <button
-                            className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                            onClick={openCreateModal}
-                        >
-                            <PlusCircle className="w-4 h-4 mr-2" />
-                            Add Your First Product
-                        </button>
+                        {isUserAdmin && (
+                            <button
+                                className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                                onClick={openCreateModal}
+                            >
+                                <PlusCircle className="w-4 h-4 mr-2" />
+                                Add Your First Product
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <ProductTable 
@@ -421,12 +451,13 @@ export default function Products() {
                         onDelete={handleDeleteProduct}
                         selectedProducts={selectedProducts}
                         toggleProductSelection={toggleProductSelection}
+                        isAdmin={isUserAdmin}
                     />
                 )}
             </div>
 
             {/* Confirmation Modal for Bulk Delete */}
-            {isConfirmDeleteOpen && (
+            {isUserAdmin && isConfirmDeleteOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
                         <div className="flex items-center text-red-500 mb-4">
@@ -455,11 +486,13 @@ export default function Products() {
                 </div>
             )}
 
-            <CreateProductModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onCreate={handleCreateModal}
-            />
+            {isUserAdmin && (
+                <CreateProductModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onCreate={handleCreateModal}
+                />
+            )}
         </div>
     );
 }
