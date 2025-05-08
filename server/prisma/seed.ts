@@ -31,7 +31,7 @@ async function deleteAllData() {
 
   for (const modelName of deleteOrder) {
     try {
-      const model: any = prisma[modelName.toLowerCase() as keyof typeof prisma];
+      const model: any = prisma[modelName.charAt(0).toLowerCase() + modelName.slice(1) as keyof typeof prisma];
       if (model) {
         await model.deleteMany({});
         console.log(`Cleared data from ${modelName}`);
