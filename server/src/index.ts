@@ -14,7 +14,16 @@ import expenseRoutes from "./routes/expenseRoutes";
 // Configurations 
 dotenv.config();
 const app = express();
-app.use(cors());
+
+// CORS configuration
+app.use(cors({
+  origin: [
+    'https://main.d2muc4pjik0lp8.amplifyapp.com',
+    'http://localhost:3000'
+  ],
+  credentials: true
+}));
+
 app.use(helmet());
 app.use(morgan("common"));
 app.use(bodyParser.json());
