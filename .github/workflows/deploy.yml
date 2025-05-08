@@ -1,0 +1,185 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    # Manual trigger option
+
+env:
+  NODE_VERSION: '18'
+  AWS_REGION: 'us-east-1'  # Change to your preferred region
+
+jobs:
+  test-and-build:
+    name: Test and Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies - Client
+        run: |
+          cd client
+          npm ci
+      
+      - name: Install dependencies - Server
+        run: |
+          cd server
+          npm ci
+      
+      - name: Run linting and tests - Client
+        run: |
+          cd client
+          npm run lint
+          npm test
+        continue-on-error: false
+      
+      - name: Run linting and tests - Server
+        run: |
+          cd server
+          npm run lint
+          npm test
+        continue-on-error: false
+      
+      - name: Build client application
+        run: |
+          cd client
+          npm run build
+      
+      - name: Build server application
+        run: |
+          cd server
+          npm run build
+      
+      - name: Upload client build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: client-build
+          path: client/.next
+          retention-days: 1
+      
+      - name: Upload server build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: server-build
+          path: server/dist
+          retention-days: 1
+
+  deploy:
+    name: Deploy to AWS
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Download client build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: client-build
+          path: client/.next
+      
+      - name: Download server build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: server-build
+          path: server/dist
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      # For an EC2 deployment
+      - name: Deploy to EC2 instance
+        if: ${{ vars.DEPLOYMENT_TARGET == 'ec2' }} 
+        run: |
+          # Install AWS CLI if needed
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          
+          # Prepare deployment package
+          mkdir -p deployment
+          cp -r client deployment/
+          cp -r server deployment/
+          cp docker-compose.yml deployment/ || echo "No docker-compose.yml found"
+          cd deployment
+          
+          # Create archive for deployment
+          zip -r deploy.zip .
+          
+          # Upload to S3 temporarily 
+          aws s3 cp deploy.zip s3://${{ secrets.S3_BUCKET }}/deploy.zip
+          
+          # Use SSM to run commands on EC2
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=InstanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+            --parameters commands="cd /var/www/inventory-management && \
+            aws s3 cp s3://${{ secrets.S3_BUCKET }}/deploy.zip . && \
+            unzip -o deploy.zip && \
+            cd client && npm ci --production && \
+            cd ../server && npm ci --production && \
+            pm2 restart all"
+      
+      # For an ECS deployment
+      - name: Deploy to ECS
+        if: ${{ vars.DEPLOYMENT_TARGET == 'ecs' }}
+        run: |
+          # Build Docker images
+          docker build -t inventory-client ./client
+          docker build -t inventory-server ./server
+          
+          # Push to ECR
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          
+          docker tag inventory-client:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/inventory-client:latest
+          docker tag inventory-server:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/inventory-server:latest
+          
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/inventory-client:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/inventory-server:latest
+          
+          # Update ECS services
+          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER }} --service ${{ secrets.ECS_CLIENT_SERVICE }} --force-new-deployment
+          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER }} --service ${{ secrets.ECS_SERVER_SERVICE }} --force-new-deployment
+
+      # For a Beanstalk deployment
+      - name: Deploy to Elastic Beanstalk
+        if: ${{ vars.DEPLOYMENT_TARGET == 'beanstalk' }}
+        run: |
+          # Install EB CLI
+          pip install awsebcli
+          
+          # Package application for deployment
+          mkdir -p .ebextensions
+          cat > .ebextensions/nodecommand.config << EOL
+          option_settings:
+            aws:elasticbeanstalk:container:nodejs:
+              NodeCommand: "npm start"
+          EOL
+          
+          # Create deployment package
+          zip -r deploy.zip . -x "*.git*" "node_modules/*"
+          
+          # Configure EB CLI
+          mkdir -p ~/.aws/
+          echo "[profile eb-cli]" > ~/.aws/config
+          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/config
+          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/config
+          echo "region=${{ env.AWS_REGION }}" >> ~/.aws/config
+          
+          # Deploy to Elastic Beanstalk
+          eb deploy ${{ secrets.EB_ENVIRONMENT }} --profile eb-cli 
