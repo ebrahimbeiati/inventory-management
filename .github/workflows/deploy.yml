@@ -135,7 +135,9 @@ jobs:
             cd ../server && npm ci --production && \
             npm install bcrypt && \
             npx prisma generate && \
-            npm run seed || echo 'Seeding skipped' && \
+            echo 'Running database seeding...' && \
+            NODE_ENV=production npm run seed || echo 'Warning: Seeding encountered errors but deployment will continue' && \
+            echo 'Restarting application...' && \
             pm2 restart all"
       
       # For an ECS deployment
