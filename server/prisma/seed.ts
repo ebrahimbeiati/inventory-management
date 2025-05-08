@@ -103,7 +103,6 @@ async function main() {
             console.error('Data:', JSON.stringify(data, null, 2));
           }
         }
-
         console.log(`Seeded ${modelName} with data from ${fileName}`);
       } catch (error) {
         console.error(`Error processing file ${fileName}:`, error);

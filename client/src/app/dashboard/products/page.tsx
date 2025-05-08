@@ -15,7 +15,7 @@ import {
   Eye,
   ArrowUpDown
 } from 'lucide-react';
-import DashboardLayout from '@/components/layout/dashboard-layout';
+import DashboardLayout from '@/app/dashboardWrapper';
 
 // Mock data for products
 const products = [
