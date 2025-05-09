@@ -4,8 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  Home, Package, Users, ShoppingCart, BarChart2, 
-  Settings, LogOut, ChevronLeft, Menu, User, X, HelpCircle,
+  Package, Users, ShoppingCart, BarChart2, 
+  Settings, LogOut, User, X, HelpCircle,
   LineChart, FileText
 } from 'lucide-react';
 import { useAppSelector } from '@/app/redux';
