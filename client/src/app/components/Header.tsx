@@ -45,7 +45,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [showLanguageNote, setShowLanguageNote] = useState(false);
   const [hoveredLanguage, setHoveredLanguage] = useState<string | null>(null);
-  const [languageNoteMessage, setLanguageNoteMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const pathname = usePathname();
