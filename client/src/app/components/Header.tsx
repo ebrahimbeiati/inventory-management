@@ -25,7 +25,8 @@ import {
   Search as SearchIcon,
   Sparkles,
   Check,
-  Languages
+  Languages,
+  AlertCircle
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/app/redux';
 import { setIsDarkMode } from '@/state';
@@ -184,6 +185,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
     { href: '/products/bulk-update', label: 'Bulk Update', icon: <ShoppingCart className="w-5 h-5" /> },
   ];
 
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
   return (
     <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
       isScrolled 
@@ -322,22 +326,125 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
             {/* Notifications */}
             <div className="relative">
-              <button className="p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  3
+                </span>
               </button>
+              
+              {/* Notifications Dropdown */}
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                            <Package className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                          </div>
+                        </div>
+                        <div className="ml-3 w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">Low Stock Alert</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Product "Widget X" is running low on stock</p>
+                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">2 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                            <Check className="w-4 h-4 text-green-600 dark:text-green-300" />
+                          </div>
+                        </div>
+                        <div className="ml-3 w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">Order Completed</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Order #12345 has been completed</p>
+                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">1 hour ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
+                            <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
+                          </div>
+                        </div>
+                        <div className="ml-3 w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">System Update</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">New features have been added to the dashboard</p>
+                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">2 hours ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                    <button className="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium">
+                      View all notifications
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* User Profile */}
-            <div className="flex items-center">
-              <button className="flex items-center p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+            <div className="relative">
+              <button 
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 <User className="w-5 h-5" />
               </button>
-              <button 
-                onClick={handleLogout}
-                className="ml-1 p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+              
+              {/* User Menu Dropdown */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <User className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                        </div>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || 'User'}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || 'user@example.com'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="py-1">
+                    {user ? (
+                      <>
+                        <Link href="/settings">
+                          <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                            Settings
+                          </div>
+                        </Link>
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Sign out
+                        </button>
+                      </>
+                    ) : (
+                      <Link href="/login">
+                        <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                          Sign in
+                        </div>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Dark Mode Toggle Button */}

@@ -7,13 +7,12 @@ import { Home } from 'lucide-react';
 
 // Define public routes that don't require authentication
 const PUBLIC_ROUTES = [
-
   '/login',              // Login page
   '/products',           // Public product catalog (read-only)
-  '/analytics',          // Analytics page
-  '/reports',            // Reports page
-  '/help',               // Help page
-  '/settings',           // Settings page
+  '/help',               // Help documentation
+  '/analytics',          // Analytics page (public metrics)
+  '/reports',            // Reports page (public reports)
+  '/settings',           // Settings page (UI preferences)
   '/dashboard'           // Dashboard page
 ];
 
