@@ -50,15 +50,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/users/validate-token`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${storedToken}`
+            'Authorization': `Bearer ${storedToken}`,
+            'Accept': 'application/json'
           }
         });
         
         if (response.ok) {
           // Token is valid, set the user
           setUser(JSON.parse(storedUser));
-        } else {
+        } else if (response.status === 401) {
           // Token is invalid, clear local storage
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          setUser(null);
+        } else if (response.status === 0) {
+          console.error('Network error during token validation');
+          // Don't clear the session on network errors
+        } else {
+          console.error('Unexpected error during token validation:', response.status);
+          // Clear session on other errors
           localStorage.removeItem('user');
           localStorage.removeItem('token');
           setUser(null);
@@ -90,15 +100,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': 'https://main.d1db78gc9kkh9d.amplifyapp.com'
+          'Accept': 'application/json'
         },
-        mode: 'cors',
-        credentials: 'include',
         body: JSON.stringify({ email, password })
       });
 
       console.log('Login response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
@@ -115,6 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error('Login endpoint not found. Please check API configuration.');
         } else if (response.status === 400) {
           throw new Error(errorData.message || 'Invalid request');
+        } else if (response.status === 0) {
+          throw new Error('Network error. Please check your internet connection and try again.');
         } else {
           throw new Error(errorData.message || `Login failed with status: ${response.status}`);
         }
