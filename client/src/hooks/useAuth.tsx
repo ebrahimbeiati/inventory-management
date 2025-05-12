@@ -80,32 +80,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (email: string, password: string) => {
     try {
-      console.log('Attempting login with:', { email, apiUrl: `${process.env.NEXT_PUBLIC_API_URL || 'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod'}/auth/login` });
+      setLoading(true);
+      setError(null);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod'}/auth/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod';
+      console.log('Attempting login to:', `${apiUrl}/users/login`);
+      
+      const response = await fetch(`${apiUrl}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Origin': 'https://main.d1db78gc9kkh9d.amplifyapp.com'
         },
+        mode: 'cors',
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
 
       console.log('Login response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Login error:', errorData);
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+        console.error('Login response error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          headers: Object.fromEntries(response.headers.entries())
+        });
         
         if (response.status === 401) {
-          throw new Error('Invalid credentials');
+          throw new Error('Invalid email or password');
         } else if (response.status === 404) {
           throw new Error('Login endpoint not found. Please check API configuration.');
         } else if (response.status === 400) {
           throw new Error(errorData.message || 'Invalid request');
         } else {
-          throw new Error(errorData.message || 'Login failed');
+          throw new Error(errorData.message || `Login failed with status: ${response.status}`);
         }
       }
 
@@ -129,6 +140,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       throw new Error('An unexpected error occurred during login');
+    } finally {
+      setLoading(false);
     }
   };
   
