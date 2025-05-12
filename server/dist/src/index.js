@@ -25,8 +25,8 @@ app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: false }));
 app.use((0, cors_1.default)({
     origin: [
-        'https://main.d1db78gc9kkh9d.amplifyapp.com',
-        'https://eu-west-2.console.aws.amazon.com/console/home'
+        "https://main.d1db78gc9kkh9d.amplifyapp.com",
+        "https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod"
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
