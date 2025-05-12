@@ -20,11 +20,7 @@ interface AuthGuardProps {
   children: React.ReactNode;
 }
 
-/**
- * AuthGuard component to protect routes that require authentication
- * Allows access to public routes without authentication
- * Shows unauthorized access UI if user is not authenticated
- */
+
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -35,13 +31,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     // Skip if still loading auth state
     if (loading) return;
     
-    // If the route is public, allow access
     if (PUBLIC_ROUTES.includes(pathname)) {
       setShowUnauthorized(false);
       return;
     }
     
-    // If user is not authenticated, show unauthorized UI
     if (!user) {
       setShowUnauthorized(true);
     } else {
@@ -49,7 +43,6 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     }
   }, [user, loading, pathname]);
   
-  // Show loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">

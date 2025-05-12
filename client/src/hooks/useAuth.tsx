@@ -83,17 +83,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/users/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod';
+      console.log('Attempting login to:', apiUrl);
+      
+      const response = await fetch(`${apiUrl}/users/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        mode: 'cors',
         body: JSON.stringify({ email, password })
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+        console.error('Login response error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          throw new Error('Invalid email or password');
+        } else if (response.status === 404) {
+          throw new Error('Login endpoint not found');
+        } else {
+          throw new Error(errorData.message || `Login failed with status: ${response.status}`);
+        }
       }
       
       const data = await response.json();
@@ -104,7 +123,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setUser(data.user);
     } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+      console.error('Login error details:', {
+        message: err.message,
+        stack: err.stack,
+        apiUrl: process.env.NEXT_PUBLIC_API_URL
+      });
+      
+      let errorMessage = 'An error occurred during login';
+      
+      if (err.message === 'Failed to fetch') {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (err.message.includes('NetworkError')) {
+        errorMessage = 'Network error. Please check if the server is running and accessible.';
+      } else if (err.message.includes('CORS')) {
+        errorMessage = 'CORS error: The server is not configured to accept requests from this domain.';
+      } else if (err.message === 'Invalid email or password') {
+        errorMessage = 'Invalid email or password. Please try again.';
+      }
+      
+      setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
