@@ -1,35 +1,62 @@
 # Inventory Management System
 
-A full-stack inventory management application built with Next.js, Node.js, and PostgreSQL.
+A modern, full-stack inventory management application built with Next.js, Node.js, and PostgreSQL.
 
-## Features
+## 🚀 Features
 
-- Product inventory management
-- User management with role-based access control
-- Dashboard with key metrics
-- Reports and analytics
-- Help center with searchable FAQs
+- **Product Management**
+  - Track product inventory levels
+  - Bulk update capabilities
+  - Low stock alerts
+  - Product categorization
 
-## Tech Stack
+- **User Management**
+  - Role-based access control (Admin, Manager, User)
+  - Secure authentication
+  - User activity tracking
 
-- **Frontend**: Next.js, React, TailwindCSS
-- **Backend**: Node.js, Express, Prisma ORM
-- **Database**: PostgreSQL
-- **Authentication**: JWT tokens
+- **Dashboard & Analytics**
+  - Real-time inventory metrics
+  - Sales analytics
+  - Custom reports generation
+  - Data visualization
 
-## Local Development
+- **Modern UI/UX**
+  - Dark/Light mode support
+  - Responsive design
+  - Interactive notifications
+  - Multi-language support (coming soon)
+
+## 🛠 Tech Stack
+
+### Frontend
+- Next.js 14
+- React
+- TypeScript
+- TailwindCSS
+- Redux Toolkit
+- Lucide Icons
+
+### Backend
+- Node.js
+- Express
+- Prisma ORM
+- PostgreSQL
+- JWT Authentication
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js 18 or higher
+- PostgreSQL 14 or higher
 - npm or yarn
-- PostgreSQL
 
-### Setup
+### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/inventory-management.git
+   git clone https://github.com/ebrahimbeiati/inventory-management.git
    cd inventory-management
    ```
 
@@ -38,137 +65,91 @@ A full-stack inventory management application built with Next.js, Node.js, and P
    # Install client dependencies
    cd client
    npm install
-   
+
    # Install server dependencies
    cd ../server
    npm install
    ```
 
-3. Configure environment variables:
-   - Copy `.env.example` to `.env` in both client and server folders
-   - Update the variables with your configuration
-
-4. Start the development servers:
+3. Set up environment variables:
    ```bash
-   # Start the client
-   cd client
-   npm run dev
-   
-   # Start the server
-   cd ../server
-   npm run dev
-   ```
+   # In client directory
+   cp .env.example .env.local
 
-### Using Docker
-
-You can also use Docker to run the entire stack:
-
-1. Set up environment variables:
-   ```bash
+   # In server directory
    cp .env.example .env
-   # Edit .env with your configuration
    ```
 
-2. Run with Docker Compose:
+4. Set up the database:
    ```bash
-   docker-compose up -d
+   cd server
+   npx prisma migrate dev
    ```
 
-## Deployment with GitHub Actions and AWS
-
-This project uses GitHub Actions for CI/CD, deploying to AWS services automatically when changes are pushed to the main branch.
-
-### AWS Deployment Options
-
-The CI/CD pipeline supports multiple AWS deployment targets:
-
-1. **Amazon EC2**
-2. **Amazon ECS (Elastic Container Service)**
-3. **AWS Elastic Beanstalk**
-
-### Setting Up GitHub Actions
-
-1. **Configure GitHub Secrets**:
-   
-   Navigate to your GitHub repository → Settings → Secrets and Variables → Actions → New repository secret, and add:
-
-   - `AWS_ACCESS_KEY_ID` - Your AWS Access Key
-   - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Key
-   - `AWS_ACCOUNT_ID` - Your AWS Account ID
-
-   Depending on your deployment target, also add:
-   
-   For EC2:
-   - `EC2_INSTANCE_ID` - Your EC2 instance ID
-   - `S3_BUCKET` - S3 bucket name for artifact transfer
-   
-   For ECS:
-   - `ECS_CLUSTER` - ECS cluster name
-   - `ECS_CLIENT_SERVICE` - ECS service name for client
-   - `ECS_SERVER_SERVICE` - ECS service name for server
-   
-   For Elastic Beanstalk:
-   - `EB_ENVIRONMENT` - Elastic Beanstalk environment name
-
-2. **Configure GitHub Variables**:
-   
-   Add a variable to specify your deployment target:
-   
-   - `DEPLOYMENT_TARGET` - Set to either `ec2`, `ecs`, or `beanstalk`
-
-### AWS Resources Setup
-
-#### EC2 Setup
-
-1. Launch an EC2 instance with Amazon Linux 2
-2. Install required dependencies:
+5. Start the development servers:
    ```bash
-   sudo yum update -y
-   sudo yum install -y nodejs npm git
-   sudo amazon-linux-extras install docker
-   sudo systemctl start docker
-   sudo systemctl enable docker
-   sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-   sudo chmod +x /usr/local/bin/docker-compose
+   # Start the client (from client directory)
+   npm run dev
+
+   # Start the server (from server directory)
+   npm run dev
    ```
-3. Install PM2 for process management:
-   ```bash
-   sudo npm install -g pm2
-   ```
-4. Set up an S3 bucket for deployment artifacts
-5. Configure instance profile with permissions for S3 access and SSM
 
-#### ECS Setup
+## 🔐 Environment Variables
 
-1. Create an ECR repository for each service
-2. Create an ECS cluster
-3. Define task definitions for your services
-4. Create ECS services using your task definitions
+### Client (.env.local)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-#### Elastic Beanstalk Setup
+### Server (.env)
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/inventory_db"
+JWT_SECRET=your_jwt_secret
+PORT=3001
+```
 
-1. Create a new Elastic Beanstalk application
-2. Create an environment with the Node.js platform
-3. Configure environment properties with your required variables
+## 🧪 Testing
 
-## Monitoring and Logs
+```bash
+# Run client tests
+cd client
+npm test
 
-- **CloudWatch**: Set up CloudWatch for monitoring metrics and logs
-- **X-Ray**: Configure AWS X-Ray for distributed tracing
+# Run server tests
+cd server
+npm test
+```
 
-## Security Considerations
+## 📦 Deployment
 
-- Use IAM roles with least privilege
-- Secure sensitive information in AWS Secrets Manager
-- Enable VPC for network isolation
-- Implement AWS WAF for web application security
+The application can be deployed using Docker:
 
-## Backup and Disaster Recovery
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+```
 
-- Set up automated database backups
-- Create disaster recovery plans with defined RTO/RPO
-- Test recovery procedures regularly
+## 🤝 Contributing
 
-## License
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Authors
+
+- **Ebrahim Beiati** - *Initial work* - [ebrahimbeiati](https://github.com/ebrahimbeiati)
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [Prisma](https://www.prisma.io/)
+- [Lucide Icons](https://lucide.dev/)
