@@ -19,7 +19,15 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cors());
+app.use(cors({
+    origin: [
+        'https://main.d1db78gc9kkh9d.amplifyapp.com',
+        'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 
 /* ROUTES */
 app.use("/dashboard", dashboardRoutes); // http://localhost:8000/dashboard

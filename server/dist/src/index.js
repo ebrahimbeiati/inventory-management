@@ -23,7 +23,15 @@ app.use(helmet_1.default.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use((0, morgan_1.default)("common"));
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: false }));
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: [
+        'https://main.d1db78gc9kkh9d.amplifyapp.com',
+        'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 /* ROUTES */
 app.use("/dashboard", dashboardRoutes_1.default); // http://localhost:8000/dashboard
 app.use("/products", productRoutes_1.default); // http://localhost:8000/products
