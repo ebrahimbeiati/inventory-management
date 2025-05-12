@@ -77,7 +77,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
               Go to Login
             </button>
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/dashboard')}
               className="w-full flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <Home className="w-5 h-5" />
