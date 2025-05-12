@@ -52,7 +52,7 @@ export default function RootLayout({
                   
                   {isMobileMenuOpen && (
                     <div 
-                      className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-20" 
+                      className="md:hidden fixed inset-0  bg-opacity-50 z-20" 
                       onClick={() => setIsMobileMenuOpen(false)}
                     ></div>
                   )}

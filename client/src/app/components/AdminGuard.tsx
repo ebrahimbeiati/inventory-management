@@ -9,10 +9,6 @@ interface AdminGuardProps {
   children: React.ReactNode;
 }
 
-/**
- * AdminGuard component to protect routes that require admin privileges
- * Redirects to dashboard if user is not an admin
- */
 const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const router = useRouter();

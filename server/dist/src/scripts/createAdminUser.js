@@ -19,17 +19,31 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const prisma = new client_1.PrismaClient();
 // Configuration - customize these values
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Should be secure in production
-const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin User';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // Should be secure in production
+const ADMIN_NAME = process.env.ADMIN_NAME;
+// Validate required environment variables
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !ADMIN_NAME) {
+    console.error('Missing required environment variables: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME');
+    process.exit(1);
+}
+// After validation, we can safely assert these are strings
+const adminEmail = ADMIN_EMAIL;
+const adminPassword = ADMIN_PASSWORD;
+const adminName = ADMIN_NAME;
 function createAdminUser() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log('Checking if admin user already exists...');
+            console.log('Starting admin user creation...');
+            console.log('Environment variables:', {
+                email: adminEmail,
+                name: adminName,
+                password: adminPassword ? '****' : 'not set'
+            });
             // Check if admin already exists
             const existingAdmin = yield prisma.users.findFirst({
                 where: {
-                    email: ADMIN_EMAIL,
+                    email: adminEmail,
                     role: 'Admin'
                 }
             });
@@ -37,13 +51,14 @@ function createAdminUser() {
                 console.log('Admin user already exists:', existingAdmin.email);
                 return;
             }
+            console.log('Creating new admin user...');
             // Create admin user
             const adminUser = yield prisma.users.create({
                 data: {
                     userId: (0, uuid_1.v4)(),
-                    name: ADMIN_NAME,
-                    email: ADMIN_EMAIL,
-                    password: ADMIN_PASSWORD, // In production, use bcrypt to hash password
+                    name: adminName,
+                    email: adminEmail,
+                    password: adminPassword,
                     role: 'Admin',
                     status: 'Active',
                     createdAt: new Date().toISOString()

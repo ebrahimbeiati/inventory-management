@@ -216,20 +216,29 @@ exports.deleteUser = deleteUser;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
+        console.log('Login attempt with:', { email, password });
         if (!email || !password) {
+            console.log('Missing credentials');
             res.status(400).json({ message: "Email and password are required" });
             return;
         }
-        // Find user by email
+        // Find user by email or name
         const user = yield prisma.users.findFirst({
-            where: { email }
+            where: {
+                OR: [
+                    { email },
+                    { name: email }
+                ]
+            }
         });
+        console.log('Found user:', user ? 'yes' : 'no');
         if (!user) {
             res.status(401).json({ message: "Invalid credentials" });
             return;
         }
         // In a real app, use bcrypt to compare password hashes
         const isPasswordValid = user.password === password;
+        console.log('Password valid:', isPasswordValid);
         if (!isPasswordValid) {
             res.status(401).json({ message: "Invalid credentials" });
             return;

@@ -138,7 +138,7 @@ const getCategories = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             distinct: ['category']
         });
         const categories = products
-            .map(p => p.category)
+            .map((p) => p.category)
             .filter(Boolean);
         res.json(categories);
     }
@@ -162,7 +162,7 @@ const getTags = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         // Collect all tags from all products
         const allTags = products
-            .map(p => { var _a; return (_a = p.tags) === null || _a === void 0 ? void 0 : _a.split(',').map(tag => tag.trim()); })
+            .map((p) => { var _a; return (_a = p.tags) === null || _a === void 0 ? void 0 : _a.split(',').map((tag) => tag.trim()); })
             .filter(Boolean)
             .flat();
         // Remove duplicates

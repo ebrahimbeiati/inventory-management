@@ -32,9 +32,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20.17.32",
+    "@types/node": "20.17.46",
     "@types/numeral": "^2.0.5",
-    "@types/react": "^19",
+    "@types/react": "19.1.4",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",

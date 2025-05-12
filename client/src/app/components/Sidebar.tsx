@@ -1,38 +1,32 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Package, Users, ShoppingCart, BarChart2, 
-  Settings, LogOut, User, X, HelpCircle,
-  LineChart, FileText
+  Settings, LogOut, User, HelpCircle,
+  LineChart, FileText, ChevronLeft, ChevronRight,
+  Menu
 } from 'lucide-react';
-import { useAppSelector } from '@/app/redux';
+// import { useAppSelector } from '@/app/redux'; // removed unused
 import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter();
   const { logout } = useAuth();
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Handle logout action
   const handleLogout = () => {
     logout();
     router.push('/login');
-    onClose(); // Close the sidebar after logout
-  };
-
-  // Handle clicking on mobile sidebar links
-  const handleLinkClick = () => {
-    if (window.innerWidth < 768) {
-      onClose();
-    }
+    onClose();
   };
 
   // Get current route
@@ -43,150 +37,108 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     return pathname === path;
   };
 
+  const navItems = [
+    { path: '/dashboard', icon: BarChart2, label: 'Dashboard' },
+    { path: '/products', icon: Package, label: 'Products' },
+    { path: '/products/bulk-update', icon: ShoppingCart, label: 'Bulk Update' },
+    { path: '/users', icon: Users, label: 'Users' },
+    { path: '/analytics', icon: LineChart, label: 'Analytics' },
+    { path: '/reports', icon: FileText, label: 'Reports' },
+    { path: '/help', icon: HelpCircle, label: 'Help' },
+    { path: '/settings', icon: Settings, label: 'Settings' },
+  ];
+
   return (
     <>
-      {/* Mobile sidebar backdrop */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-20 bg-black bg-opacity-50 md:hidden"
-          onClick={onClose}
-        ></div>
-      )}
-
-      {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform duration-300 ease-in-out transform ${
-        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-      } w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
-        {/* Sidebar header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+      {/* Mobile Navigation Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between h-16 px-4">
           <div className="flex items-center space-x-2">
             <div className="bg-blue-600 text-white p-2 rounded-md">
               <Package className="w-5 h-5" />
             </div>
             <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory Pro</span>
           </div>
-          <button 
-            className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            onClick={onClose}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            <X className="w-6 h-6" />
+            <Menu className="w-6 h-6" />
           </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-16 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
+            <nav className="py-2">
+              {navItems.map((item) => (
+                <Link key={item.path} href={item.path}>
+                  <div 
+                    className={`flex items-center px-4 py-3 text-sm font-medium ${
+                      isActive(item.path)
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="ml-3">{item.label}</span>
+                  </div>
+                </Link>
+              ))}
+              <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="ml-3">Logout</span>
+                </button>
+              </div>
+            </nav>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside className={`hidden md:block fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out transform ${
+        isCollapsed ? 'md:w-20' : 'w-64'
+      } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+          <div className={`flex items-center space-x-2 ${isCollapsed ? 'hidden' : ''}`}>
+            <div className="bg-blue-600 text-white p-2 rounded-md">
+              <Package className="w-5 h-5" />
+            </div>
+            <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory Pro</span>
+          </div>
+          <div className="flex items-center">
+            <button 
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? <ChevronRight className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Sidebar content */}
         <div className="py-4 px-3">
           <nav className="space-y-1">
-            <Link href="/dashboard">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/dashboard') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <BarChart2 className="w-5 h-5 mr-3" />
-                Dashboard
-              </div>
-            </Link>
-
-            <Link href="/products">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/products') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <Package className="w-5 h-5 mr-3" />
-                Products
-              </div>
-            </Link>
-
-            <Link href="/products/bulk-update">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/products/bulk-update') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <ShoppingCart className="w-5 h-5 mr-3" />
-                Bulk Update
-              </div>
-            </Link>
-
-            <Link href="/users">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/users') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <Users className="w-5 h-5 mr-3" />
-                Users
-              </div>
-            </Link>
-
-            <Link href="/analytics">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/analytics') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <LineChart className="w-5 h-5 mr-3" />
-                Analytics
-              </div>
-            </Link>
-
-            <Link href="/reports">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/reports') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <FileText className="w-5 h-5 mr-3" />
-                Reports
-              </div>
-            </Link>
-
-            <Link href="/help">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/help') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <HelpCircle className="w-5 h-5 mr-3" />
-                Help
-              </div>
-            </Link>
-
-            <Link href="/settings">
-              <div 
-                className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/settings') 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <Settings className="w-5 h-5 mr-3" />
-                Settings
-              </div>
-            </Link>
+            {navItems.map((item) => (
+              <Link key={item.path} href={item.path}>
+                <div 
+                  className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                    isActive(item.path)
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {!isCollapsed && <span className="ml-3">{item.label}</span>}
+                </div>
+              </Link>
+            ))}
           </nav>
           
           {/* Sidebar footer */}
@@ -196,15 +148,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
                   <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </div>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-700 dark:text-gray-300">Admin User</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
-                </div>
+                {!isCollapsed && (
+                  <div className="text-sm">
+                    <p className="font-medium text-gray-700 dark:text-gray-300">Admin User</p>
+                    <p className="text-gray-500 dark:text-gray-400">admin@example.com</p>
+                  </div>
+                )}
               </div>
-              <button 
+              <button
                 onClick={handleLogout}
-                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                title="Logout"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <LogOut className="w-5 h-5" />
               </button>

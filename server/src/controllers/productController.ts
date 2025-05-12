@@ -152,7 +152,7 @@ export const getCategories = async (
     });
     
     const categories = products
-      .map(p => p.category)
+      .map((p: { category: string | null }) => p.category)
       .filter(Boolean) as string[];
     
     res.json(categories);
@@ -180,7 +180,7 @@ export const getTags = async (
     
     // Collect all tags from all products
     const allTags = products
-      .map(p => p.tags?.split(',').map(tag => tag.trim()))
+      .map((p: { tags: string | null }) => p.tags?.split(',').map((tag: string) => tag.trim()))
       .filter(Boolean)
       .flat() as string[];
     

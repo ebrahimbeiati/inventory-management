@@ -21,6 +21,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors({
     origin: [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
         "https://main.d1db78gc9kkh9d.amplifyapp.com",
         "https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod"
     ],
@@ -35,9 +40,8 @@ app.use("/products", productRoutes); // http://localhost:8000/products
 app.use("/users", userRoutes); // http://localhost:8000/users
 app.use("/expenses", expenseRoutes); // http://localhost:8000/expenses
 
-
 //server port
-const PORT = Number(process.env.PORT) || 3001;
+const PORT = process.env.NODE_ENV === 'production' ? 80 : 3001;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is running on port ${PORT}`);
 });

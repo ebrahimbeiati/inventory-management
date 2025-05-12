@@ -8,18 +8,34 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 // Configuration - customize these values
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Should be secure in production
-const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin User';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ; // Should be secure in production
+const ADMIN_NAME = process.env.ADMIN_NAME;
+
+// Validate required environment variables
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !ADMIN_NAME) {
+  console.error('Missing required environment variables: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME');
+  process.exit(1);
+}
+
+// After validation, we can safely assert these are strings
+const adminEmail = ADMIN_EMAIL as string;
+const adminPassword = ADMIN_PASSWORD as string;
+const adminName = ADMIN_NAME as string;
 
 async function createAdminUser() {
   try {
-    console.log('Checking if admin user already exists...');
+    console.log('Starting admin user creation...');
+    console.log('Environment variables:', {
+      email: adminEmail,
+      name: adminName,
+      password: adminPassword ? '****' : 'not set'
+    });
     
     // Check if admin already exists
     const existingAdmin = await prisma.users.findFirst({
       where: {
-        email: ADMIN_EMAIL,
+        email: adminEmail,
         role: 'Admin'
       }
     });
@@ -29,13 +45,15 @@ async function createAdminUser() {
       return;
     }
     
+    console.log('Creating new admin user...');
+    
     // Create admin user
     const adminUser = await prisma.users.create({
       data: {
         userId: uuidv4(),
-        name: ADMIN_NAME,
-        email: ADMIN_EMAIL,
-        password: ADMIN_PASSWORD, // In production, use bcrypt to hash password
+        name: adminName,
+        email: adminEmail,
+        password: adminPassword,
         role: 'Admin',
         status: 'Active',
         createdAt: new Date().toISOString()
