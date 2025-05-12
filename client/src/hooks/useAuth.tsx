@@ -90,7 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Origin': 'https://main.d1db78gc9kkh9d.amplifyapp.com'
         },
         mode: 'cors',
         body: JSON.stringify({ email, password })
@@ -110,6 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error('Invalid email or password');
         } else if (response.status === 404) {
           throw new Error('Login endpoint not found');
+        } else if (response.status === 400) {
+          throw new Error(errorData.message || 'Invalid request');
         } else {
           throw new Error(errorData.message || `Login failed with status: ${response.status}`);
         }
@@ -122,6 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', data.token);
       
       setUser(data.user);
+      
+      // Redirect to dashboard after successful login
+      window.location.href = '/dashboard';
     } catch (err: any) {
       console.error('Login error details:', {
         message: err.message,
