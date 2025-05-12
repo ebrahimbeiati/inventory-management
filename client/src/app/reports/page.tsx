@@ -24,7 +24,6 @@ const Reports = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [dateRange, setDateRange] = useState("month");
-  const [expandedReport, setExpandedReport] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [selectedReport, setSelectedReport] = useState<any>(null);

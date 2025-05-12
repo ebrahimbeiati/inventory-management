@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -187,6 +187,33 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  // Add refs for dropdowns
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close notifications and user menu
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        isNotificationsOpen &&
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setIsNotificationsOpen(false);
+      }
+      if (
+        isUserMenuOpen &&
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    if (isNotificationsOpen || isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isNotificationsOpen, isUserMenuOpen]);
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
@@ -338,7 +365,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               
               {/* Notifications Dropdown */}
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
+                <div ref={notificationRef} className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
                   </div>
@@ -406,7 +433,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               
               {/* User Menu Dropdown */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
+                <div ref={userMenuRef} className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
