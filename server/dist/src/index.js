@@ -27,8 +27,13 @@ app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: false }));
 app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    credentials: true
+    origin: [
+        process.env.CLIENT_URL || 'http://localhost:3000',
+        'https://main.d1db78gc9kkh9d.amplifyapp.com'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 /* ROUTES */
 app.use("/auth", auth_1.default); // http://localhost:3001/auth
