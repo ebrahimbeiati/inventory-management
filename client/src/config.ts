@@ -1,14 +1,14 @@
 export const config = {
   aws: {
-    region: process.env.NEXT_PUBLIC_AWS_REGION || 'eu-west-2',
+    region: process.env.NEXT_PUBLIC_AWS_REGION,
     cognito: {
-      userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || 'eu-west-2_sACvhQq3X',
-      userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '50sg9ugui3m9568fjtqo4ah2ad',
+      userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID,
+      userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID,
       userPoolClientSecret: process.env.NEXT_PUBLIC_COGNITO_CLIENT_SECRET
     }
   },
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod'
+    baseUrl: process.env.NEXT_PUBLIC_API_URL
   }
 };
 

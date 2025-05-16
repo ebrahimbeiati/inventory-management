@@ -90,7 +90,10 @@ export const api = createApi({
       console.log('API Request - ID Token present:', !!idToken);
       
       if (idToken) {
+        // Ensure we're sending the token in the correct format
         headers.set('Authorization', `Bearer ${idToken}`);
+        // Add content type header
+        headers.set('Content-Type', 'application/json');
       }
       
       return headers;

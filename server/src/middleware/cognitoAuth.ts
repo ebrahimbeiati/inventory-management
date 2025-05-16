@@ -50,8 +50,8 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     const user = {
       userId: tokenPayload.sub,
       email: tokenPayload.email,
-      role: (tokenPayload['custom:role'] || 'Employee').toLowerCase(),
-      status: 'CONFIRMED'
+      role: (tokenPayload['custom:role'] || 'employee').toLowerCase(),
+      status: 'Active'
     };
     
     console.log('Extracted user:', user);
