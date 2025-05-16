@@ -8,7 +8,7 @@ export const config = {
     }
   },
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'https://unyca5yulf.execute-api.eu-west-2.amazonaws.com/prod'
   }
 };
 

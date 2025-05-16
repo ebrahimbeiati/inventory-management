@@ -7,3 +7,7 @@ server/.env/
 client/.next/
 .env
 .env.local
+server/.env
+*.log
+node_modules/
+dist/
