@@ -1,21 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
-import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
-// Function to hash passwords
-async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 10;
-  return bcrypt.hash(password, saltRounds);
-}
-
 async function deleteAllData() {
-  // Delete data in the correct order to respect foreign key constraints
-  // Tables with foreign key references must be deleted before the tables they reference
   const deleteOrder = [
-    // First delete tables that reference other tables
     "Sales",
     "SalesSummary", 
     "Purchases",
@@ -23,8 +13,6 @@ async function deleteAllData() {
     "Expenses",
     "ExpenseByCategory",
     "ExpenseSummary",
-    
-    // Then delete the referenced tables
     "Products",
     "Users",
   ];
@@ -51,26 +39,22 @@ async function main() {
 
   // Define the order for seeding (based on dependencies)
   const seedOrder = [
-    // First seed tables that are referenced by others
     "users.json",
     "products.json",
-    
-    // Then seed the tables with foreign key references
     "expenseSummary.json",
+    "expenseByCategory.json",
     "sales.json",
     "salesSummary.json",
     "purchases.json",
     "purchaseSummary.json",
     "expenses.json",
-    "expenseByCategory.json",
   ];
 
   try {
+    // First clear all existing data
     await deleteAllData();
-    
-    // Hash the default password once
-    const defaultPassword = await hashPassword("password123");
 
+    // Then seed new data
     for (const fileName of seedOrder) {
       try {
         const filePath = path.join(dataDirectory, fileName);
@@ -78,7 +62,7 @@ async function main() {
           console.log(`File ${fileName} not found, skipping...`);
           continue;
         }
-        
+
         const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
         const modelName = path.basename(fileName, path.extname(fileName));
         const model: any = prisma[modelName as keyof typeof prisma];
@@ -90,19 +74,54 @@ async function main() {
 
         for (const data of jsonData) {
           try {
-            // Add password for User model if it's missing
-            if (modelName === "users" && !data.password) {
-              data.password = defaultPassword;
+            // Create records
+            if (modelName === "Sales" || modelName === "Purchases") {
+              const { productId, ...restData } = data;
+              await model.create({
+                data: {
+                  ...restData,
+                  product: {
+                    connect: {
+                      productId: productId,
+                    },
+                  },
+                },
+              });
+            } else if (modelName === "ExpenseByCategory") {
+              const { expenseSummaryId, ...restData } = data;
+              await model.create({
+                data: {
+                  ...restData,
+                  expenseSummary: {
+                    connect: {
+                      expenseSummaryId: expenseSummaryId,
+                    },
+                  },
+                },
+              });
+            } else if (modelName === "Users") {
+              // Add required fields for Users with proper defaults
+              await model.create({
+                data: {
+                  ...data,
+                  password: "defaultPassword123", // Default password for seeded users
+                  role: "Employee", // Default role
+                  status: "Active", // Default status
+                  createdAt: new Date().toISOString(), // Current timestamp
+                  lastLogin: null, // No last login for new users
+                },
+              });
+            } else {
+              await model.create({
+                data,
+              });
             }
-            
-            await model.create({
-              data,
-            });
           } catch (error) {
             console.error(`Error creating ${modelName} record:`, error);
             console.error('Data:', JSON.stringify(data, null, 2));
           }
         }
+
         console.log(`Seeded ${modelName} with data from ${fileName}`);
       } catch (error) {
         console.error(`Error processing file ${fileName}:`, error);

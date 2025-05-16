@@ -1,14 +1,46 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from 'uuid';
-import { generateToken } from "../middleware/auth";
+import { ROLES } from '../constants/roles';
 
 const prisma = new PrismaClient();
+
+const createTestUser = async () => {
+  try {
+    // Check if any users exist
+    const userCount = await prisma.users.count();
+    console.log('Current user count:', userCount);
+
+    if (userCount === 0) {
+      console.log('Creating test user...');
+      await prisma.users.create({
+        data: {
+          userId: uuidv4(),
+          name: 'Test User',
+          email: 'test@example.com',
+          role: 'employee',
+          status: 'Active',
+          createdAt: new Date().toISOString(),
+          password: ''
+        }
+      });
+      console.log('Test user created');
+    }
+  } catch (error) {
+    console.error('Error creating test user:', error);
+  }
+};
+
+// Call this function when the server starts
+createTestUser();
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const { search } = req.query;
-    console.log("Fetching users with search:", search);
+    console.log("=== GetUsers Debug Info ===");
+    console.log("Request headers:", req.headers);
+    console.log("Authenticated user:", req.user);
+    console.log("Search term:", search);
     
     // Get users with search filter if provided
     const users = await prisma.users.findMany({
@@ -21,16 +53,22 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
             ]
           } 
         : {},
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
+      select: {
+        userId: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        lastLogin: true
+      }
     });
     
-    // Remove passwords from response
-    const usersWithoutPasswords = users.map(user => {
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
-    });
+    console.log("Found users count:", users.length);
+    console.log("Users found:", users);
     
-    res.json(usersWithoutPasswords);
+    res.json(users);
   } catch (error) {
     console.error("Error retrieving users:", error);
     res.status(500).json({ message: "Error retrieving users" });
@@ -61,49 +99,49 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("Creating user with data:", req.body);
-    
+    const { name, email, role = ROLES.EMPLOYEE, status = 'Active' } = req.body;
+
     // Validate required fields
-    const { name, email, password, role, status } = req.body;
-    
-    if (!name || !email || !password) {
-      console.log("Missing required fields for user creation");
-      res.status(400).json({ message: "Name, email, and password are required" });
+    if (!name || !email) {
+      res.status(400).json({ error: 'Name and email are required' });
       return;
     }
-    
-    // Check if user with same email already exists
-    const existingUser = await prisma.users.findFirst({
-      where: { email }
+
+    // Validate role
+    if (!Object.values(ROLES).includes(role)) {
+      res.status(400).json({ error: 'Invalid role' });
+      return;
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.users.findUnique({
+      where: { email },
     });
-    
+
     if (existingUser) {
-      console.log(`User with email ${email} already exists`);
-      res.status(409).json({ message: `User with email ${email} already exists` });
+      res.status(409).json({ error: 'User with this email already exists' });
       return;
     }
-    
-    // Create the user with a generated UUID
-    const newUser = await prisma.users.create({
+
+    // Create user in database
+    const user = await prisma.users.create({
       data: {
         userId: uuidv4(),
         name,
         email,
-        password, // In a real app, this should be hashed
-        role: role || "Employee",
-        status: status || "Active",
-        createdAt: new Date().toISOString()
-      }
+        role,
+        status,
+        createdAt: new Date().toISOString(),
+        password: ""
+      },
     });
-    
+
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = newUser;
-    
-    console.log("User created successfully:", userWithoutPassword);
+    const { password: _, ...userWithoutPassword } = user;
     res.status(201).json(userWithoutPassword);
   } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).json({ message: "Error creating user" });
+    console.error('Error creating user:', error);
+    res.status(500).json({ error: 'Failed to create user' });
   }
 };
 
@@ -186,9 +224,9 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     }
     
     // If the user is an admin, check if they're the last admin user
-    if (existingUser.role === 'Admin') {
+    if (existingUser.role === 'admin') {
       const adminCount = await prisma.users.count({
-        where: { role: 'Admin' }
+        where: { role: 'admin' }
       });
       
       if (adminCount <= 1) {
@@ -258,14 +296,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
     
     // Generate JWT token
-    const token = generateToken(user);
     
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
     
     res.json({
       user: userWithoutPassword,
-      token
+      
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -291,14 +328,14 @@ export const setUserAsAdmin = async (req: Request, res: Response): Promise<void>
     // Update user to admin role
     const updatedUser = await prisma.users.update({
       where: { userId },
-      data: { role: "Admin" }
+      data: { role: "admin" }
     });
     
     // Remove password from response
     const { password, ...userWithoutPassword } = updatedUser;
     
     res.json({
-      message: "User role updated to Admin",
+      message: "User role updated to admin",
       user: userWithoutPassword
     });
   } catch (error) {

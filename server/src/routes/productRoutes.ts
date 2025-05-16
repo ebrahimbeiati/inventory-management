@@ -7,14 +7,18 @@ import {
   getCategories,
   getTags
 } from "../controllers/productController";
+import { authenticate, requireAdmin } from "../middleware/cognitoAuth";
 
 const router = Router();
 
+// Public routes
 router.get("/", getProducts);
-router.post("/", createProduct);
-router.put("/:productId", updateProduct);
-router.delete("/:productId", deleteProduct);
 router.get("/categories", getCategories);
 router.get("/tags", getTags);
+
+// Protected routes (require authentication and admin role)
+router.post("/", authenticate, requireAdmin, createProduct);
+router.put("/:productId", authenticate, requireAdmin, updateProduct);
+router.delete("/:productId", authenticate, requireAdmin, deleteProduct);
 
 export default router;

@@ -32,21 +32,14 @@ const Dashboard = () => {
   
   // Detect dark mode from system preferences and update when it changes
   useEffect(() => {
-    // Check if user prefers dark mode
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    // Set initial value
     setIsDarkMode(darkModeQuery.matches);
     
-    // Create a listener function
     const listener = (e: MediaQueryListEvent) => {
       setIsDarkMode(e.matches);
     };
     
-    // Add the listener to detect changes
     darkModeQuery.addEventListener('change', listener);
-    
-    // Clean up
     return () => {
       darkModeQuery.removeEventListener('change', listener);
     };
@@ -62,10 +55,10 @@ const Dashboard = () => {
 
   if (!products || products.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 ml-0 sm:ml-64">
-        <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-2xl font-semibold mb-6">Public Dashboard</h1>
         <div className="bg-white shadow rounded-lg p-6">
-          <p className="text-gray-500">No inventory data available. Add some products to see your dashboard.</p>
+          <p className="text-gray-500">No inventory data available.</p>
         </div>
       </div>
     )
@@ -124,7 +117,7 @@ const Dashboard = () => {
   ]
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ml-0 sm:ml-64">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Inventory Dashboard</h1>

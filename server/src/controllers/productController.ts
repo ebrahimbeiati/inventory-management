@@ -201,13 +201,42 @@ export const deleteProduct = async (
   try {
     const { productId } = req.params;
     
+    console.log('Attempting to delete product:', productId);
+    
+    // Check if product exists first
+    const product = await prisma.products.findUnique({
+      where: { productId }
+    });
+    
+    if (!product) {
+      console.log('Product not found:', productId);
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+    
+    // Delete the product
     await prisma.products.delete({
       where: { productId },
     });
     
+    console.log('Successfully deleted product:', productId);
     res.status(204).send();
   } catch (error) {
     console.error("Error deleting product:", error);
+    
+    // Handle specific error cases
+    if (error instanceof Error) {
+      if (error.message.includes('Record to delete does not exist')) {
+        res.status(404).json({ message: "Product not found" });
+        return;
+      }
+      
+      if (error.message.includes('Foreign key constraint')) {
+        res.status(409).json({ message: "Cannot delete product as it is referenced by other records" });
+        return;
+      }
+    }
+    
     res.status(500).json({ message: "Error deleting product" });
   }
 };

@@ -150,16 +150,37 @@ export default function Products() {
         }
 
         try {
-            const deletePromises = selectedProducts.map(productId => 
-                deleteProduct(productId).unwrap()
+            const results = await Promise.allSettled(
+                selectedProducts.map(productId => 
+                    deleteProduct(productId).unwrap()
+                )
             );
             
-            await Promise.all(deletePromises);
+            // Check results
+            const successful = results.filter(r => r.status === 'fulfilled').length;
+            const failed = results.filter(r => r.status === 'rejected').length;
+            
+            if (failed > 0) {
+                console.error("Some products failed to delete:", results);
+                alert(`${successful} products deleted successfully. ${failed} products failed to delete.`);
+            } else {
+                alert(`Successfully deleted ${successful} products.`);
+            }
+            
             setSelectedProducts([]);
             setIsConfirmDeleteOpen(false);
         } catch (error) {
             console.error("Error deleting products:", error);
-            alert("Failed to delete some products. Please try again.");
+            
+            let errorMessage = "Failed to delete products. ";
+            if (error && typeof error === 'object' && 'data' in error) {
+                const errorData = error.data as { message?: string };
+                if (errorData?.message) {
+                    errorMessage += errorData.message;
+                }
+            }
+            
+            alert(errorMessage);
         }
     };
 
@@ -193,14 +214,12 @@ export default function Products() {
         document.body.appendChild(link);
         link.click();
         
-        // Cleanup: remove the link element and revoke the Blob URL
         setTimeout(() => {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }, 100);
     };
 
-    // Use useMemo to prevent unnecessary re-sorting on every render
     const sortedProducts = useMemo(() => {
         if (!products) return [];
         
@@ -229,15 +248,12 @@ export default function Products() {
         router.push(url, { scroll: false });
     };
 
-    // More efficient function to clear URL parameters without affecting state
     const clearURLParams = () => {
-        // Use replaceState instead of router.push to avoid creating a new history entry
         window.history.replaceState({}, '', '/products');
     };
 
     // Modified function to open modal and clear URL params
     const openCreateModal = () => {
-        // Only clear URL if we have search parameters
         if (searchTerm || selectedCategory || selectedTag) {
             clearURLParams();
         }
@@ -496,4 +512,3 @@ export default function Products() {
         </div>
     );
 }
-

@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -15,21 +26,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const bcrypt_1 = __importDefault(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
-// Function to hash passwords
-function hashPassword(password) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const saltRounds = 10;
-        return bcrypt_1.default.hash(password, saltRounds);
-    });
-}
 function deleteAllData() {
     return __awaiter(this, void 0, void 0, function* () {
-        // Delete data in the correct order to respect foreign key constraints
-        // Tables with foreign key references must be deleted before the tables they reference
         const deleteOrder = [
-            // First delete tables that reference other tables
             "Sales",
             "SalesSummary",
             "Purchases",
@@ -37,7 +37,6 @@ function deleteAllData() {
             "Expenses",
             "ExpenseByCategory",
             "ExpenseSummary",
-            // Then delete the referenced tables
             "Products",
             "Users",
         ];
@@ -63,22 +62,20 @@ function main() {
         const dataDirectory = path_1.default.join(__dirname, "seedData");
         // Define the order for seeding (based on dependencies)
         const seedOrder = [
-            // First seed tables that are referenced by others
             "users.json",
             "products.json",
-            // Then seed the tables with foreign key references
             "expenseSummary.json",
+            "expenseByCategory.json",
             "sales.json",
             "salesSummary.json",
             "purchases.json",
             "purchaseSummary.json",
             "expenses.json",
-            "expenseByCategory.json",
         ];
         try {
+            // First clear all existing data
             yield deleteAllData();
-            // Hash the default password once
-            const defaultPassword = yield hashPassword("password123");
+            // Then seed new data
             for (const fileName of seedOrder) {
                 try {
                     const filePath = path_1.default.join(dataDirectory, fileName);
@@ -95,13 +92,38 @@ function main() {
                     }
                     for (const data of jsonData) {
                         try {
-                            // Add password for User model if it's missing
-                            if (modelName === "users" && !data.password) {
-                                data.password = defaultPassword;
+                            // Create records
+                            if (modelName === "Sales" || modelName === "Purchases") {
+                                const { productId } = data, restData = __rest(data, ["productId"]);
+                                yield model.create({
+                                    data: Object.assign(Object.assign({}, restData), { product: {
+                                            connect: {
+                                                productId: productId,
+                                            },
+                                        } }),
+                                });
                             }
-                            yield model.create({
-                                data,
-                            });
+                            else if (modelName === "ExpenseByCategory") {
+                                const { expenseSummaryId } = data, restData = __rest(data, ["expenseSummaryId"]);
+                                yield model.create({
+                                    data: Object.assign(Object.assign({}, restData), { expenseSummary: {
+                                            connect: {
+                                                expenseSummaryId: expenseSummaryId,
+                                            },
+                                        } }),
+                                });
+                            }
+                            else if (modelName === "Users") {
+                                // Add required fields for Users with proper defaults
+                                yield model.create({
+                                    data: Object.assign(Object.assign({}, data), { password: "defaultPassword123", role: "Employee", status: "Active", createdAt: new Date().toISOString(), lastLogin: null }),
+                                });
+                            }
+                            else {
+                                yield model.create({
+                                    data,
+                                });
+                            }
                         }
                         catch (error) {
                             console.error(`Error creating ${modelName} record:`, error);

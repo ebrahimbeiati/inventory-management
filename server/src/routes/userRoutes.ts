@@ -9,24 +9,20 @@ import {
   setUserAsAdmin,
   validateToken
 } from "../controllers/userController";
-import { authenticate, requireAdmin, requireAdminOrSelf } from "../middleware/auth";
+import { authenticate, requireAdmin, requireAdminOrSelf } from "../middleware/cognitoAuth";
 
 const router = Router();
 
 // Public routes
 router.post("/login", login);
 
-// Token validation route
+// Protected routes
 router.get("/validate-token", authenticate, validateToken);
-
-// Protected routes - require authentication
-router.get("/", authenticate, getUsers);
+router.get("/", authenticate, requireAdmin, getUsers);
 router.get("/:userId", authenticate, requireAdminOrSelf, getUserById);
-
-// Admin-only routes
 router.post("/", authenticate, requireAdmin, createUser);
 router.put("/:userId", authenticate, requireAdminOrSelf, updateUser);
 router.delete("/:userId", authenticate, requireAdmin, deleteUser);
-router.put("/:userId/set-admin", authenticate, requireAdmin, setUserAsAdmin);
+router.post("/:userId/admin", authenticate, requireAdmin, setUserAsAdmin);
 
 export default router;

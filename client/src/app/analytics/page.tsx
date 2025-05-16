@@ -224,10 +224,10 @@ const Analytics = () => {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1F2937',
+                    backgroundColor: 'white',
                     border: 'none',
                     borderRadius: '0.5rem',
-                    color: '#F3F4F6'
+                  
                   }}
                 />
               </PieChart>

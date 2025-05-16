@@ -14,46 +14,55 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const getDashboardMetrics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log('Fetching dashboard metrics...');
         const popularProducts = yield prisma.products.findMany({
             take: 15,
             orderBy: {
                 stockQuantity: "desc",
             },
         });
+        console.log('Found products:', popularProducts.length);
         const salesSummary = yield prisma.salesSummary.findMany({
             take: 5,
             orderBy: {
                 date: "desc",
             },
         });
+        console.log('Found sales summaries:', salesSummary.length);
         const purchaseSummary = yield prisma.purchaseSummary.findMany({
             take: 5,
             orderBy: {
                 date: "desc",
             },
         });
+        console.log('Found purchase summaries:', purchaseSummary.length);
         const expenseSummary = yield prisma.expenseSummary.findMany({
             take: 5,
             orderBy: {
                 date: "desc",
             },
         });
+        console.log('Found expense summaries:', expenseSummary.length);
         const expenseByCategorySummaryRaw = yield prisma.expenseByCategory.findMany({
             take: 5,
             orderBy: {
                 date: "desc",
             },
         });
+        console.log('Found expense by category summaries:', expenseByCategorySummaryRaw.length);
         const expenseByCategorySummary = expenseByCategorySummaryRaw.map((item) => (Object.assign(Object.assign({}, item), { amount: item.amount.toString() })));
-        res.json({
+        const response = {
             popularProducts,
             salesSummary,
             purchaseSummary,
             expenseSummary,
             expenseByCategorySummary,
-        });
+        };
+        console.log('Sending response:', JSON.stringify(response, null, 2));
+        res.json(response);
     }
     catch (error) {
+        console.error('Error in getDashboardMetrics:', error);
         res.status(500).json({ message: "Error retrieving dashboard metrics" });
     }
 });

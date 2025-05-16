@@ -215,11 +215,11 @@ export default function UserDetailsPage() {
                 </div>
                 <h2 className="text-xl font-bold text-center">{user.name}</h2>
                 <span className={`mt-2 px-3 py-1 text-sm font-semibold rounded-full 
-                  ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 
-                    user.role === 'Manager' ? 'bg-blue-100 text-blue-800' : 
+                  ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 
+                    user.role === 'manager' ? 'bg-blue-100 text-blue-800' : 
                     'bg-green-100 text-green-800'}`}
                 >
-                  {user.role}
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 </span>
                 <span className={`mt-2 px-3 py-1 text-sm font-semibold rounded-full 
                   ${user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
@@ -334,9 +334,9 @@ export default function UserDetailsPage() {
                       disabled={isUpdating}
                       required
                     >
-                      <option value="Admin">Admin</option>
-                      <option value="Manager">Manager</option>
-                      <option value="Employee">Employee</option>
+                      <option value="admin">Admin</option>
+                      <option value="manager">Manager</option>
+                      <option value="employee">Employee</option>
                     </select>
                   ) : (
                     <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-800">{user.role}</div>

@@ -49,7 +49,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
 
   // Add dark mode state and toggle
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
@@ -171,7 +171,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   };
 
   const handleLogout = () => {
-    logout();
+    signOut();
     router.push('/login');
   };
 
@@ -533,32 +533,32 @@ export default function Header({ onMenuClick }: HeaderProps) {
             <div className="flex items-center px-4">
               <div className="flex-shrink-0">
                 <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                  <User className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                  <User className="h-6 w-6 text-gray-500 dark:text-gray-300" />
                 </div>
               </div>
               <div className="ml-3">
-                <div className="text-base font-medium text-gray-800 dark:text-white">
+                <div className="text-base font-medium text-gray-800 dark:text-gray-100">
                   {user?.name || 'User'}
                 </div>
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-300">
                   {user?.email || 'user@example.com'}
                 </div>
               </div>
             </div>
             <div className="mt-3 space-y-1 px-2">
-              <button className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
-                <Bell className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <button className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
+                <Bell className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
                 Notifications
               </button>
-              <button className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
-                <Settings className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <button className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
+                <Settings className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
                 Settings
               </button>
               <button 
                 onClick={handleLogout}
-                className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full"
+                className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 w-full"
               >
-                <LogOut className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <LogOut className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
                 Sign out
               </button>
             </div>

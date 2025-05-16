@@ -18,13 +18,13 @@ interface SidebarProps {
 
 export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { signOut, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Handle logout action
   const handleLogout = () => {
-    logout();
+    signOut();
     router.push('/login');
     onClose();
   };
@@ -143,21 +143,25 @@ export default function Sidebar({ onClose }: SidebarProps) {
           
           {/* Sidebar footer */}
           <div className="absolute bottom-0 left-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center min-w-0 flex-1">
+                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
                   <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </div>
                 {!isCollapsed && (
-                  <div className="text-sm">
-                    <p className="font-medium text-gray-700 dark:text-gray-300">Admin User</p>
-                    <p className="text-gray-500 dark:text-gray-400">admin@example.com</p>
+                  <div className="ml-3 text-sm min-w-0 flex-1">
+                    <p className="font-medium text-gray-700 dark:text-gray-300 truncate">
+                      {user?.role || 'User'}
+                    </p>
+                    <p className="text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title={user?.email}>
+                      {user?.email}
+                    </p>
                   </div>
                 )}
               </div>
               <button
                 onClick={handleLogout}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="flex-shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <LogOut className="w-5 h-5" />
               </button>

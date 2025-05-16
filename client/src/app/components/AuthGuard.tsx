@@ -7,19 +7,20 @@ import { Home } from 'lucide-react';
 
 // Define public routes that don't require authentication
 const PUBLIC_ROUTES = [
+  '/',                   // Root path
   '/login',              // Login page
   '/products',           // Public product catalog (read-only)
   '/help',               // Help documentation
   '/analytics',          // Analytics page (public metrics)
   '/reports',            // Reports page (public reports)
   '/settings',           // Settings page (UI preferences)
-  '/dashboard'           // Dashboard page
+  '/dashboard',          // Dashboard page
+  '/users'               // Users page
 ];
 
 interface AuthGuardProps {
   children: React.ReactNode;
 }
-
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -31,17 +32,27 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     // Skip if still loading auth state
     if (loading) return;
     
+    // Handle root path redirect
+    if (pathname === '/') {
+      router.push('/dashboard');
+      return;
+    }
+    
     if (PUBLIC_ROUTES.includes(pathname)) {
       setShowUnauthorized(false);
       return;
     }
     
     if (!user) {
-      setShowUnauthorized(true);
+      if (pathname === '/users') {
+        router.push('/login');
+      } else {
+        setShowUnauthorized(true);
+      }
     } else {
       setShowUnauthorized(false);
     }
-  }, [user, loading, pathname]);
+  }, [user, loading, pathname, router]);
   
   if (loading) {
     return (

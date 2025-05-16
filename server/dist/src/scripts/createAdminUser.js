@@ -12,8 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const cognitoService_1 = require("../services/cognitoService");
 const client_1 = require("@prisma/client");
-const uuid_1 = require("uuid");
 const dotenv_1 = __importDefault(require("dotenv"));
 // Load environment variables
 dotenv_1.default.config();
@@ -21,23 +21,20 @@ const prisma = new client_1.PrismaClient();
 // Configuration - customize these values
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // Should be secure in production
-const ADMIN_NAME = process.env.ADMIN_NAME;
 // Validate required environment variables
-if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !ADMIN_NAME) {
-    console.error('Missing required environment variables: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME');
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    console.error('Missing required environment variables: ADMIN_EMAIL, ADMIN_PASSWORD');
     process.exit(1);
 }
 // After validation, we can safely assert these are strings
 const adminEmail = ADMIN_EMAIL;
 const adminPassword = ADMIN_PASSWORD;
-const adminName = ADMIN_NAME;
 function createAdminUser() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('Starting admin user creation...');
             console.log('Environment variables:', {
                 email: adminEmail,
-                name: adminName,
                 password: adminPassword ? '****' : 'not set'
             });
             // Check if admin already exists
@@ -52,20 +49,22 @@ function createAdminUser() {
                 return;
             }
             console.log('Creating new admin user...');
-            // Create admin user
+            // Create admin in Cognito
+            yield cognitoService_1.CognitoService.createAdminUser(adminEmail, adminPassword);
+            // Create admin in database without password
             const adminUser = yield prisma.users.create({
                 data: {
-                    userId: (0, uuid_1.v4)(),
-                    name: adminName,
+                    userId: adminEmail,
+                    name: 'Admin User',
                     email: adminEmail,
-                    password: adminPassword,
-                    role: 'Admin',
+                    role: 'admin',
                     status: 'Active',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    lastLogin: null,
+                    password: '' // Add empty password since it's required by schema
                 }
             });
             console.log('Admin user created successfully:');
-            console.log(`Name: ${adminUser.name}`);
             console.log(`Email: ${adminUser.email}`);
             console.log(`Role: ${adminUser.role}`);
         }
@@ -84,5 +83,4 @@ createAdminUser();
 // 2. You can customize the admin user by setting environment variables:
 //    - ADMIN_EMAIL
 //    - ADMIN_PASSWORD
-//    - ADMIN_NAME
 // 3. In production, make sure to use secure passwords and store them safely 

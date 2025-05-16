@@ -23,12 +23,42 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateToken = exports.setUserAsAdmin = exports.login = exports.deleteUser = exports.updateUser = exports.createUser = exports.getUserById = exports.getUsers = void 0;
 const client_1 = require("@prisma/client");
 const uuid_1 = require("uuid");
-const auth_1 = require("../middleware/auth");
+const roles_1 = require("../constants/roles");
 const prisma = new client_1.PrismaClient();
+const createTestUser = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Check if any users exist
+        const userCount = yield prisma.users.count();
+        console.log('Current user count:', userCount);
+        if (userCount === 0) {
+            console.log('Creating test user...');
+            yield prisma.users.create({
+                data: {
+                    userId: (0, uuid_1.v4)(),
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    role: 'employee',
+                    status: 'Active',
+                    createdAt: new Date().toISOString(),
+                    password: ''
+                }
+            });
+            console.log('Test user created');
+        }
+    }
+    catch (error) {
+        console.error('Error creating test user:', error);
+    }
+});
+// Call this function when the server starts
+createTestUser();
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { search } = req.query;
-        console.log("Fetching users with search:", search);
+        console.log("=== GetUsers Debug Info ===");
+        console.log("Request headers:", req.headers);
+        console.log("Authenticated user:", req.user);
+        console.log("Search term:", search);
         // Get users with search filter if provided
         const users = yield prisma.users.findMany({
             where: search
@@ -40,14 +70,20 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     ]
                 }
                 : {},
-            orderBy: { name: 'asc' }
+            orderBy: { name: 'asc' },
+            select: {
+                userId: true,
+                name: true,
+                email: true,
+                role: true,
+                status: true,
+                createdAt: true,
+                lastLogin: true
+            }
         });
-        // Remove passwords from response
-        const usersWithoutPasswords = users.map(user => {
-            const { password } = user, userWithoutPassword = __rest(user, ["password"]);
-            return userWithoutPassword;
-        });
-        res.json(usersWithoutPasswords);
+        console.log("Found users count:", users.length);
+        console.log("Users found:", users);
+        res.json(users);
     }
     catch (error) {
         console.error("Error retrieving users:", error);
@@ -76,43 +112,44 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.getUserById = getUserById;
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("Creating user with data:", req.body);
+        const { name, email, role = roles_1.ROLES.EMPLOYEE, status = 'Active' } = req.body;
         // Validate required fields
-        const { name, email, password, role, status } = req.body;
-        if (!name || !email || !password) {
-            console.log("Missing required fields for user creation");
-            res.status(400).json({ message: "Name, email, and password are required" });
+        if (!name || !email) {
+            res.status(400).json({ error: 'Name and email are required' });
             return;
         }
-        // Check if user with same email already exists
-        const existingUser = yield prisma.users.findFirst({
-            where: { email }
+        // Validate role
+        if (!Object.values(roles_1.ROLES).includes(role)) {
+            res.status(400).json({ error: 'Invalid role' });
+            return;
+        }
+        // Check if user already exists
+        const existingUser = yield prisma.users.findUnique({
+            where: { email },
         });
         if (existingUser) {
-            console.log(`User with email ${email} already exists`);
-            res.status(409).json({ message: `User with email ${email} already exists` });
+            res.status(409).json({ error: 'User with this email already exists' });
             return;
         }
-        // Create the user with a generated UUID
-        const newUser = yield prisma.users.create({
+        // Create user in database
+        const user = yield prisma.users.create({
             data: {
                 userId: (0, uuid_1.v4)(),
                 name,
                 email,
-                password, // In a real app, this should be hashed
-                role: role || "Employee",
-                status: status || "Active",
-                createdAt: new Date().toISOString()
-            }
+                role,
+                status,
+                createdAt: new Date().toISOString(),
+                password: ""
+            },
         });
         // Remove password from response
-        const { password: _ } = newUser, userWithoutPassword = __rest(newUser, ["password"]);
-        console.log("User created successfully:", userWithoutPassword);
+        const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
         res.status(201).json(userWithoutPassword);
     }
     catch (error) {
-        console.error("Error creating user:", error);
-        res.status(500).json({ message: "Error creating user" });
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Failed to create user' });
     }
 });
 exports.createUser = createUser;
@@ -187,9 +224,9 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return;
         }
         // If the user is an admin, check if they're the last admin user
-        if (existingUser.role === 'Admin') {
+        if (existingUser.role === 'admin') {
             const adminCount = yield prisma.users.count({
-                where: { role: 'Admin' }
+                where: { role: 'admin' }
             });
             if (adminCount <= 1) {
                 console.log(`Prevented deletion of the last admin user (${existingUser.email})`);
@@ -249,12 +286,10 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             data: { lastLogin: new Date().toISOString() }
         });
         // Generate JWT token
-        const token = (0, auth_1.generateToken)(user);
         // Remove password from response
         const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
         res.json({
             user: userWithoutPassword,
-            token
         });
     }
     catch (error) {
@@ -278,12 +313,12 @@ const setUserAsAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function*
         // Update user to admin role
         const updatedUser = yield prisma.users.update({
             where: { userId },
-            data: { role: "Admin" }
+            data: { role: "admin" }
         });
         // Remove password from response
         const { password } = updatedUser, userWithoutPassword = __rest(updatedUser, ["password"]);
         res.json({
-            message: "User role updated to Admin",
+            message: "User role updated to admin",
             user: userWithoutPassword
         });
     }

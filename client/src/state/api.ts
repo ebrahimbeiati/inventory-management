@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { config } from '@/config';
 
 export interface Product {
   productId: string;
@@ -69,25 +70,31 @@ export interface User {
 export interface NewUser {
   name: string;
   email: string;
-  password: string;
   role: string;
   status: string;
 }
 
+interface ApiError {
+  status: number;
+  data: {
+    message: string;
+  };
+}
+
 export const api = createApi({
-  baseQuery: fetchBaseQuery({ 
-    baseUrl: process.env.NEXT_PUBLIC_API_URL,
-    prepareHeaders: (headers, { getState }) => {
-      // Get the token from localStorage
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  baseQuery: fetchBaseQuery({
+    baseUrl: config.api.baseUrl,
+    prepareHeaders: (headers) => {
+      // Get the ID token from localStorage
+      const idToken = localStorage.getItem('idToken');
+      console.log('API Request - ID Token present:', !!idToken);
       
-      // If we have a token, add it to the Authorization header
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
+      if (idToken) {
+        headers.set('Authorization', `Bearer ${idToken}`);
       }
       
       return headers;
-    }
+    },
   }),
   reducerPath: "api",
   tagTypes: ["DashboardMetrics", "Products", "Users", "Expenses", "Categories", "Tags"],
@@ -145,9 +152,17 @@ export const api = createApi({
     }),
     getUsers: build.query<User[], { search?: string } | void>({
       query: (params) => ({
-        url: "/users",
-        params: params || {},
+        url: '/users',
+        params: params && 'search' in params ? { search: params.search } : undefined,
       }),
+      transformResponse: (response: User[]) => {
+        console.log('Users API Response:', response);
+        return response;
+      },
+      transformErrorResponse: (error: ApiError) => {
+        console.error('Users API Error:', error);
+        return error;
+      },
       providesTags: ["Users"],
     }),
     getUserById: build.query<User, string>({

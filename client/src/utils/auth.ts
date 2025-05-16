@@ -1,14 +1,14 @@
 import { User } from '@/types';
 
 export const ROLES = {
-  ADMIN: 'Admin',
-  EMPLOYEE: 'Employee'
+  ADMIN: 'admin',
+  EMPLOYEE: 'employee'
 } as const;
 
 export type Role = typeof ROLES[keyof typeof ROLES];
 
-export const isAdmin = (user: User | null): boolean => {
-  return user?.role === ROLES.ADMIN;
+export const isAdmin = (user: any): boolean => {
+  return user?.role?.toLowerCase() === ROLES.ADMIN;
 };
 
 export const hasPermission = (user: User | null, requiredRole: Role): boolean => {
@@ -16,7 +16,7 @@ export const hasPermission = (user: User | null, requiredRole: Role): boolean =>
   
   switch (requiredRole) {
     case ROLES.ADMIN:
-      return user.role === ROLES.ADMIN;
+      return user.role?.toLowerCase() === ROLES.ADMIN;
     case ROLES.EMPLOYEE:
       return true; // Both admin and employee can access
     default:

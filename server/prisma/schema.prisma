@@ -1,7 +1,8 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "app/generated/prisma/client"
+  output   = "./node_modules/.prisma/client"
 }
+
 
 datasource db {
   provider = "postgresql"
@@ -12,11 +13,11 @@ model Users {
   userId    String  @id @default(uuid())
   name      String
   email     String  @unique
-  password  String
   createdAt String?
   lastLogin String?
   role      String  @default("Employee")
   status    String  @default("Active")
+  password  String?
 }
 
 model Products {

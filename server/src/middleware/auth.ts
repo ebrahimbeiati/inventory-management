@@ -1,82 +1,105 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { PrismaClient } from '@prisma/client';
+import { CognitoJwtVerifier } from 'aws-jwt-verify';
 
-// Secret should be in environment variable in production
-const JWT_SECRET = process.env.JWT_SECRET || 'inventory-management-secret-key';
+const prisma = new PrismaClient();
 
-// Extended Request type to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any;
-    }
-  }
-}
+// Initialize Cognito JWT verifier
+const verifier = CognitoJwtVerifier.create({
+  userPoolId: process.env.COGNITO_USER_POOL_ID!,
+  tokenUse: 'id',
+  clientId: process.env.COGNITO_CLIENT_ID!,
+});
 
-// Generate JWT for a user
-export const generateToken = (user: any): string => {
-  // Remove sensitive information
-  const { password, ...userInfo } = user;
-  
-  return jwt.sign(
-    userInfo,
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-};
-
-// Authentication middleware
-export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
-  // Get token from header
+// Verify user middleware
+export const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
   
-  if (!token) {
-    res.status(401).json({ message: 'Authentication required' });
+  console.log('Auth header:', authHeader);
+  
+  if (!authHeader) {
+    console.log('No auth header provided');
+    res.status(401).json({ message: 'No token provided' });
     return;
   }
+  
+  const token = authHeader.split(' ')[1];
+  console.log('Token received:', token ? 'Yes' : 'No');
   
   try {
-    // Verify the token
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    console.log('Verifying token with Cognito...');
+    const payload = await verifier.verify(token);
+    console.log('Token verified successfully');
+    console.log('User payload:', {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload['custom:role'] || 'Employee'
+    });
+    
+    // Find user in database
+    const user = await prisma.users.findUnique({
+      where: { userId: payload.sub }
+    });
+
+    if (!user) {
+      console.log('User not found in database');
+      res.status(401).json({ message: 'Invalid user' });
+      return;
+    }
+
+    if (user.status !== 'Active') {
+      console.log('User is not active');
+      res.status(403).json({ message: 'User account is inactive' });
+      return;
+    }
+
+    console.log('User verified:', { userId: user.userId, email: user.email, role: user.role });
+    (req as any).user = {
+      userId: user.userId,
+      email: user.email,
+      role: user.role
+    };
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Invalid or expired token' });
+    console.error('Token verification error:', error);
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
-// Admin role check middleware
-export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
-  // First make sure user is authenticated
-  if (!req.user) {
-    res.status(401).json({ message: 'Authentication required' });
-    return;
-  }
+// Middleware to check if user is admin
+export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  const user = (req as any).user;
   
-  // Check if user has admin role
-  if (req.user.role !== 'Admin') {
-    res.status(403).json({ message: 'Admin access required' });
+  if (!user || user.role !== 'admin') {
+    res.status(403).json({ message: 'Access denied. Admin privileges required.' });
     return;
   }
   
   next();
 };
 
-// For operations that should only be performed by admins or the user themselves
-export const requireAdminOrSelf = (req: Request, res: Response, next: NextFunction): void => {
-  if (!req.user) {
-    res.status(401).json({ message: 'Authentication required' });
+// Middleware to check if user is active
+export const isActive = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const user = (req as any).user;
+  
+  if (!user) {
+    res.status(401).json({ message: 'User not found' });
     return;
   }
-  
-  // The userId from the route parameter
-  const { userId } = req.params;
-  
-  // Allow if admin or if it's the user's own data
-  if (req.user.role === 'Admin' || req.user.userId === userId) {
+
+  try {
+    const dbUser = await prisma.users.findUnique({
+      where: { userId: user.userId }
+    });
+
+    if (!dbUser || dbUser.status !== 'Active') {
+      res.status(403).json({ message: 'Access denied. Account is inactive.' });
+      return;
+    }
+    
     next();
-  } else {
-    res.status(403).json({ message: 'Access denied' });
+  } catch (error) {
+    console.error('Error checking user status:', error);
+    res.status(500).json({ message: 'Error checking user status' });
   }
 }; 
