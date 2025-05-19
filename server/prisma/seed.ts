@@ -104,7 +104,6 @@ async function main() {
               await model.create({
                 data: {
                   ...data,
-                  password: "defaultPassword123", // Default password for seeded users
                   role: "Employee", // Default role
                   status: "Active", // Default status
                   createdAt: new Date().toISOString(), // Current timestamp

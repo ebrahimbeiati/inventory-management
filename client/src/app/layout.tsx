@@ -38,20 +38,6 @@ const cognitoConfig = {
   }
 };
 
-// Debug logging
-console.log('Environment variables:', {
-  region: process.env.NEXT_PUBLIC_AWS_REGION,
-  userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID,
-  clientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID
-});
-
-console.log('OIDC Config:', {
-  authority: cognitoConfig.authority,
-  client_id: cognitoConfig.client_id,
-  redirect_uri: cognitoConfig.redirect_uri,
-  metadata: cognitoConfig.metadata
-});
-
 const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({

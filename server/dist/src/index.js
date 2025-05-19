@@ -36,6 +36,9 @@ app.use((0, cors_1.default)({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 /* ROUTES */
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "healthy" });
+});
 app.use("/auth", auth_1.default); // http://localhost:3001/auth
 app.use("/dashboard", dashboardRoutes_1.default); // http://localhost:3001/dashboard
 app.use("/products", productRoutes_1.default); // http://localhost:3001/products

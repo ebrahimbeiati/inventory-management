@@ -116,7 +116,7 @@ function main() {
                             else if (modelName === "Users") {
                                 // Add required fields for Users with proper defaults
                                 yield model.create({
-                                    data: Object.assign(Object.assign({}, data), { password: "defaultPassword123", role: "Employee", status: "Active", createdAt: new Date().toISOString(), lastLogin: null }),
+                                    data: Object.assign(Object.assign({}, data), { role: "Employee", status: "Active", createdAt: new Date().toISOString(), lastLogin: null }),
                                 });
                             }
                             else {

@@ -10,7 +10,7 @@ import ImagePlaceholder from "@/app/components/ImagePlaceholder";
 
 // Extend the Product interface to include description
 interface ProductWithDescription extends Product {
-  description?: string;
+  description: string;
 }
 
 export default function ProductDetails() {

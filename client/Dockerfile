@@ -20,16 +20,23 @@ WORKDIR /app
 
 # Set environment to production
 ENV NODE_ENV=production
+ENV PORT=3000
 
 # Copy necessary files from builder stage
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/next.config.mjs ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next/static ./.next/static
+
+# Create a non-root user and set ownership
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001 && chown -R nextjs:nodejs /app
+USER nextjs
 
 # Expose port
 EXPOSE 3000
 
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
 # Start the application
-CMD ["npm", "start"] 
+CMD ["node", "server.js"] 

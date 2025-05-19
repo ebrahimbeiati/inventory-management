@@ -4,12 +4,14 @@ import { config } from '@/config';
 export interface Product {
   productId: string;
   name: string;
+  description: string;
   price: number;
   rating?: number;
   stockQuantity: number;
   imageUrl?: string;
   category?: string;
   tags?: string;
+  createdAt?: string;
 }
 
 export interface NewProduct {

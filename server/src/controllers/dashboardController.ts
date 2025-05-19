@@ -53,7 +53,7 @@ export const getDashboardMetrics = async (
     console.log('Found expense by category summaries:', expenseByCategorySummaryRaw.length);
     
     const expenseByCategorySummary = expenseByCategorySummaryRaw.map(
-      (item) => ({
+      (item: any) => ({
         ...item,
         amount: item.amount.toString(),
       })

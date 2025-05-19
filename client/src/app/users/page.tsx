@@ -68,20 +68,17 @@ export default function UsersPage() {
       console.log("Submitting user data:", userData);
       
       if (selectedUser) {
-        // Update existing user
         await updateUser({
           userId: selectedUser.userId,
           ...userData
         }).unwrap();
         setSelectedUser(null);
         
-        // Show success message
         alert(`User ${userData.email} was successfully updated`);
       } else {
-        // Create new user
         await createUser({
           ...userData,
-          name: userData.email.split('@')[0] // Use email prefix as name
+          name: userData.name.split('@')[0] // Use email prefix as name
         } as NewUser).unwrap();
         setIsModalOpen(false);
         
@@ -231,9 +228,9 @@ export default function UsersPage() {
       </div>
       
       {/* User create/edit modal */}
-      {isAdmin() && (
+      {isAdmin() && isModalOpen && (
         <UserForm 
-          open={isModalOpen || !!selectedUser} 
+          open={isModalOpen} 
           onClose={() => {
             setIsModalOpen(false);
             setSelectedUser(null);
@@ -245,8 +242,8 @@ export default function UsersPage() {
       )}
       
       {/* Delete confirmation modal */}
-      {isAdmin() && selectedUser && (
-        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${isDeleteModalOpen ? '' : 'hidden'}`}>
+      {isAdmin() && isDeleteModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="mb-4 text-center">
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />

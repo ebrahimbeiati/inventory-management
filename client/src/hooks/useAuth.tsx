@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 
 interface User {
   userId: string;
+  name: string;
   email: string;
   role: string;
   status: string;
@@ -44,9 +45,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (idToken && userStr) {
           const userData = JSON.parse(userStr);
-          console.log('Loading user data from localStorage:', userData);
           setUser({
             userId: userData.userId || '',
+            name: userData.name || '',
             email: userData.email || '',
             role: (userData.role || 'employee').toLowerCase(),
             status: 'CONFIRMED'

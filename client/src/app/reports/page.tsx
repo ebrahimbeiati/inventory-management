@@ -261,7 +261,7 @@ Date: ${new Date().toLocaleDateString()}
                   <div key={key} className="col-span-12 sm:col-span-6 lg:col-span-3">
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg h-full">
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{key}</p>
-                      <p className="text-xl font-semibold text-gray-800 dark:text-white">{value}</p>
+                      <p className="text-xl font-semibold text-gray-800 dark:text-white">{String(value)}</p>
                     </div>
                   </div>
                 ))}

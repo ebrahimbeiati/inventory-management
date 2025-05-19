@@ -8,22 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateToken = exports.setUserAsAdmin = exports.login = exports.deleteUser = exports.updateUser = exports.createUser = exports.getUserById = exports.getUsers = void 0;
 const client_1 = require("@prisma/client");
 const uuid_1 = require("uuid");
 const roles_1 = require("../constants/roles");
+const cognitoService_1 = require("../services/cognitoService");
 const prisma = new client_1.PrismaClient();
 const createTestUser = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -39,8 +29,7 @@ const createTestUser = () => __awaiter(void 0, void 0, void 0, function* () {
                     email: 'test@example.com',
                     role: 'employee',
                     status: 'Active',
-                    createdAt: new Date().toISOString(),
-                    password: ''
+                    createdAt: new Date().toISOString()
                 }
             });
             console.log('Test user created');
@@ -101,9 +90,7 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             res.status(404).json({ message: `User with ID ${userId} not found` });
             return;
         }
-        // Remove password from response
-        const { password } = user, userWithoutPassword = __rest(user, ["password"]);
-        res.json(userWithoutPassword);
+        res.json(user);
     }
     catch (error) {
         res.status(500).json({ message: "Error retrieving user" });
@@ -139,13 +126,10 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 email,
                 role,
                 status,
-                createdAt: new Date().toISOString(),
-                password: ""
+                createdAt: new Date().toISOString()
             },
         });
-        // Remove password from response
-        const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
-        res.status(201).json(userWithoutPassword);
+        res.status(201).json(user);
     }
     catch (error) {
         console.error('Error creating user:', error);
@@ -167,7 +151,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return;
         }
         // Extract update data, excluding userId which can't be changed
-        const { name, email, password, role, status } = req.body;
+        const { name, email, role, status } = req.body;
         // If changing email, check that it's not already taken by another user
         if (email && email !== existingUser.email) {
             const emailExists = yield prisma.users.findFirst({
@@ -188,8 +172,6 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             updateData.name = name;
         if (email)
             updateData.email = email;
-        if (password)
-            updateData.password = password; // Should be hashed in a real app
         if (role)
             updateData.role = role;
         if (status)
@@ -199,10 +181,8 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             where: { userId },
             data: updateData
         });
-        // Remove password from response
-        const { password: _ } = updatedUser, userWithoutPassword = __rest(updatedUser, ["password"]);
         console.log(`Successfully updated user with ID: ${userId}`);
-        res.status(200).json(userWithoutPassword);
+        res.status(200).json(updatedUser);
     }
     catch (error) {
         console.error("Error updating user:", error);
@@ -253,44 +233,21 @@ exports.deleteUser = deleteUser;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
-        console.log('Login attempt with:', { email, password });
+        console.log('Login attempt with:', { email });
         if (!email || !password) {
             console.log('Missing credentials');
             res.status(400).json({ message: "Email and password are required" });
             return;
         }
-        // Find user by email or name
-        const user = yield prisma.users.findFirst({
-            where: {
-                OR: [
-                    { email },
-                    { name: email }
-                ]
-            }
-        });
-        console.log('Found user:', user ? 'yes' : 'no');
-        if (!user) {
-            res.status(401).json({ message: "Invalid credentials" });
-            return;
+        // Authenticate with Cognito
+        try {
+            const { token, user } = yield cognitoService_1.CognitoService.signIn(email, password);
+            res.json({ token, user });
         }
-        // In a real app, use bcrypt to compare password hashes
-        const isPasswordValid = user.password === password;
-        console.log('Password valid:', isPasswordValid);
-        if (!isPasswordValid) {
+        catch (authError) {
+            console.error('Cognito authentication failed:', authError);
             res.status(401).json({ message: "Invalid credentials" });
-            return;
         }
-        // Update last login time
-        yield prisma.users.update({
-            where: { userId: user.userId },
-            data: { lastLogin: new Date().toISOString() }
-        });
-        // Generate JWT token
-        // Remove password from response
-        const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
-        res.json({
-            user: userWithoutPassword,
-        });
     }
     catch (error) {
         console.error("Login error:", error);
@@ -315,11 +272,9 @@ const setUserAsAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function*
             where: { userId },
             data: { role: "admin" }
         });
-        // Remove password from response
-        const { password } = updatedUser, userWithoutPassword = __rest(updatedUser, ["password"]);
         res.json({
             message: "User role updated to admin",
-            user: userWithoutPassword
+            user: updatedUser
         });
     }
     catch (error) {

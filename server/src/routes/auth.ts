@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { verifyToken } from '../middleware/auth';
+import { login } from '../controllers/userController';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// Login endpoint
+router.post('/login', login);
 
 // Verify authentication status
 router.all('/verify', verifyToken, async (req, res) => {

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from 'uuid';
 import { ROLES } from '../constants/roles';
+import { CognitoService } from '../services/cognitoService';
 
 const prisma = new PrismaClient();
 
@@ -20,8 +21,7 @@ const createTestUser = async () => {
           email: 'test@example.com',
           role: 'employee',
           status: 'Active',
-          createdAt: new Date().toISOString(),
-          password: ''
+          createdAt: new Date().toISOString()
         }
       });
       console.log('Test user created');
@@ -88,10 +88,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
       return;
     }
     
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user;
-    
-    res.json(userWithoutPassword);
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: "Error retrieving user" });
   }
@@ -131,14 +128,11 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         email,
         role,
         status,
-        createdAt: new Date().toISOString(),
-        password: ""
+        createdAt: new Date().toISOString()
       },
     });
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-    res.status(201).json(userWithoutPassword);
+    res.status(201).json(user);
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).json({ error: 'Failed to create user' });
@@ -163,7 +157,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     }
     
     // Extract update data, excluding userId which can't be changed
-    const { name, email, password, role, status } = req.body;
+    const { name, email, role, status } = req.body;
     
     // If changing email, check that it's not already taken by another user
     if (email && email !== existingUser.email) {
@@ -185,7 +179,6 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     const updateData: any = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
-    if (password) updateData.password = password; // Should be hashed in a real app
     if (role) updateData.role = role;
     if (status) updateData.status = status;
     
@@ -195,11 +188,8 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       data: updateData
     });
     
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = updatedUser;
-    
     console.log(`Successfully updated user with ID: ${userId}`);
-    res.status(200).json(userWithoutPassword);
+    res.status(200).json(updatedUser);
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ message: "Error updating user" });
@@ -255,55 +245,22 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-    console.log('Login attempt with:', { email, password });
-    
+    console.log('Login attempt with:', { email });
+
     if (!email || !password) {
       console.log('Missing credentials');
       res.status(400).json({ message: "Email and password are required" });
       return;
     }
-    
-    // Find user by email or name
-    const user = await prisma.users.findFirst({
-      where: {
-        OR: [
-          { email },
-          { name: email }
-        ]
-      }
-    });
-    
-    console.log('Found user:', user ? 'yes' : 'no');
-    
-    if (!user) {
+
+    // Authenticate with Cognito
+    try {
+      const { token, user } = await CognitoService.signIn(email, password);
+      res.json({ token, user });
+    } catch (authError) {
+      console.error('Cognito authentication failed:', authError);
       res.status(401).json({ message: "Invalid credentials" });
-      return;
     }
-    
-    // In a real app, use bcrypt to compare password hashes
-    const isPasswordValid = user.password === password;
-    console.log('Password valid:', isPasswordValid);
-    
-    if (!isPasswordValid) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
-    }
-    
-    // Update last login time
-    await prisma.users.update({
-      where: { userId: user.userId },
-      data: { lastLogin: new Date().toISOString() }
-    });
-    
-    // Generate JWT token
-    
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-    
-    res.json({
-      user: userWithoutPassword,
-      
-    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Error during login" });
@@ -331,12 +288,9 @@ export const setUserAsAdmin = async (req: Request, res: Response): Promise<void>
       data: { role: "admin" }
     });
     
-    // Remove password from response
-    const { password, ...userWithoutPassword } = updatedUser;
-    
     res.json({
       message: "User role updated to admin",
-      user: userWithoutPassword
+      user: updatedUser
     });
   } catch (error) {
     console.error("Error setting user as admin:", error);

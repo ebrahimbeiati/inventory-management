@@ -181,14 +181,14 @@ const ProductTable = ({
                     <div className="flex items-center text-sm">
                       <Calendar className="w-3 h-3 text-gray-500 dark:text-gray-400 mr-1" />
                       <span className="text-gray-500 dark:text-gray-400 text-xs">
-                        {formatDate(product.updatedAt || product.createdAt)}
+                        {formatDate(product.createdAt)}
                       </span>
                     </div>
                     
                     <div className="flex items-center text-sm">
                       <Star className="w-3 h-3 text-gray-500 dark:text-gray-400 mr-1" />
                       <div className="flex items-center">
-                        <Rating value={product.rating || 0} size="small" />
+                        <Rating rating={product.rating || 0} size="sm" />
                         <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
                           {product.rating ? product.rating.toFixed(1) : 'N/A'}
                         </span>
@@ -411,12 +411,12 @@ const ProductTable = ({
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(product.updatedAt || product.createdAt)}
+                        {formatDate(product.createdAt)}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center">
-                        <Rating value={product.rating || 0} size="small" />
+                        <Rating rating={product.rating || 0} size="sm" />
                         <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">
                           {product.rating ? product.rating.toFixed(1) : 'N/A'}
                         </span>

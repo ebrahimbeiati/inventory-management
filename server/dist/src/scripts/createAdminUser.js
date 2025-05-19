@@ -60,8 +60,7 @@ function createAdminUser() {
                     role: 'admin',
                     status: 'Active',
                     createdAt: new Date().toISOString(),
-                    lastLogin: null,
-                    password: '' // Add empty password since it's required by schema
+                    lastLogin: null
                 }
             });
             console.log('Admin user created successfully:');

@@ -1,9 +1,15 @@
-name: Deploy to Amplify
+name: Deploy to AWS
 
 on:
   push:
     branches:
       - main
+
+env:
+  AWS_REGION: eu-north-1
+  ECR_REPOSITORY: inventory-management
+  ECS_CLUSTER: inventory-cluster
+  ECS_SERVICE: inventory-service
 
 jobs:
   deploy:
@@ -11,17 +17,42 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install Amplify CLI
-        run: npm install -g @aws-amplify/cli
+        uses: actions/checkout@v3
 
       - name: Set up AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push client image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-client:$IMAGE_TAG ./client
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-client:$IMAGE_TAG
+
+      - name: Build and push server image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-server:$IMAGE_TAG ./server
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-server:$IMAGE_TAG
+
+      - name: Update ECS services
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE-client --force-new-deployment
+          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE-server --force-new-deployment
+
+      - name: Install Amplify CLI
+        run: npm install -g @aws-amplify/cli
 
       - name: Initialize Amplify
         run: amplify init --yes

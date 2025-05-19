@@ -433,7 +433,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               
               {/* User Menu Dropdown */}
               {isUserMenuOpen && (
-                <div ref={userMenuRef} className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
+                <div ref={userMenuRef} className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
@@ -441,9 +441,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
                           <User className="w-6 h-6 text-gray-500 dark:text-gray-400" />
                         </div>
                       </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || 'User'}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || 'user@example.com'}</p>
+                      <div className="ml-3 min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={user?.email || 'User'}>
+                          {user?.email || 'User'}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
+                          {user?.role || 'user'}
+                        </p>
                       </div>
                     </div>
                   </div>

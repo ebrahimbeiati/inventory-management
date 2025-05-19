@@ -5,7 +5,12 @@ import Navbar from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import StoreProvider, { useAppSelector } from "./redux";
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  title?: string;
+}
+
+const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed
   );
@@ -31,6 +36,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         }`}
       >
         <Navbar />
+        {title && <h1>{title}</h1>}
         {children}
       </main>
     </div>
@@ -46,3 +52,5 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default DashboardWrapper;
+
+export { DashboardLayout };

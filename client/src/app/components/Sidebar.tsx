@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   Package, Users, ShoppingCart, BarChart2, 
   Settings, LogOut, User, HelpCircle,
@@ -13,11 +13,13 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export default function Sidebar({ onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { signOut, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,10 +30,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
     router.push('/login');
     onClose();
   };
-
-  // Get current route
-  const isClient = typeof window !== 'undefined';
-  const pathname = isClient ? window.location.pathname : '';
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -60,7 +58,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory Pro</span>
           </div>
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             <Menu className="w-6 h-6" />
@@ -68,7 +66,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         </div>
 
         {/* Mobile Menu */}
-        {isMobileMenuOpen && (
+        {isOpen && (
           <div className="absolute top-16 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
             <nav className="py-2">
               {navItems.map((item) => (
@@ -79,7 +77,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                         ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={onClose}
                   >
                     <item.icon className="w-5 h-5" />
                     <span className="ml-3">{item.label}</span>

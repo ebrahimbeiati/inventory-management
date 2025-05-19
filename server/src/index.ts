@@ -33,6 +33,10 @@ app.use(cors({
 }));
 
 /* ROUTES */
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "healthy" });
+});
+
 app.use("/auth", authRoutes); // http://localhost:3001/auth
 app.use("/dashboard", dashboardRoutes); // http://localhost:3001/dashboard
 app.use("/products", productRoutes); // http://localhost:3001/products
