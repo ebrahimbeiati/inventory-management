@@ -42,7 +42,7 @@ try {
   const currentConfig = Amplify.getConfig();
   console.log('Current Amplify Config:', JSON.stringify(currentConfig, null, 2));
 } catch (error) {
-  console.error('Error configuring Amplify:', error);
+  console.error('Error configuring to Amplify:', error);
   throw error; // Re-throw to prevent app from running with invalid config
 }
 
