@@ -11,6 +11,8 @@ env:
   ECR_REPOSITORY_SERVER: inventory-management-server
   ECS_CLUSTER: inventory-cluster
   ECS_SERVICE: inventory-service
+  EC2_HOST: 54.87.65.21  # Replace with your EC2 instance IP
+  EC2_USER: ec2-user  # Replace with your EC2 user (e.g., ubuntu, ec2-user)
 
 jobs:
   deploy:
@@ -46,6 +48,26 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_SERVER:$IMAGE_TAG ./server
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_SERVER:$IMAGE_TAG
+
+      - name: Deploy to EC2
+        run: |
+          # Save the private key to a file
+          echo "${{ secrets.EC2_SSH_KEY }}" > deploy_key.pem
+          chmod 600 deploy_key.pem
+
+          # SSH into the EC2 instance and pull the Docker images
+          ssh -i deploy_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+            # Login to ECR
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+
+            # Pull the Docker images
+            docker pull ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY_CLIENT:$IMAGE_TAG
+            docker pull ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY_SERVER:$IMAGE_TAG
+
+            # Run the Docker containers
+            docker run -d -p 3000:3000 ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY_CLIENT:$IMAGE_TAG
+            docker run -d -p 4000:4000 ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY_SERVER:$IMAGE_TAG
+          EOF
 
       - name: Update ECS services
         run: |
