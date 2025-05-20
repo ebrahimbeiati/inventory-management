@@ -80,8 +80,6 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         // Generate a UUID for productId
         const productId = (0, uuid_1.v4)();
         const productData = Object.assign(Object.assign({}, cleanedData), { productId });
-        // Log the data being sent to Prisma
-        console.log("Sending data to Prisma:", JSON.stringify(productData, null, 2));
         const product = yield prisma.products.create({
             data: productData
         });
@@ -170,7 +168,6 @@ const getTags = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.json(uniqueTags);
     }
     catch (error) {
-        console.error("Error retrieving tags:", error);
         res.status(500).json({ message: "Error retrieving tags" });
     }
 });
@@ -178,13 +175,11 @@ exports.getTags = getTags;
 const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId } = req.params;
-        console.log('Attempting to delete product:', productId);
         // Check if product exists first
         const product = yield prisma.products.findUnique({
             where: { productId }
         });
         if (!product) {
-            console.log('Product not found:', productId);
             res.status(404).json({ message: "Product not found" });
             return;
         }
@@ -192,7 +187,6 @@ const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         yield prisma.products.delete({
             where: { productId },
         });
-        console.log('Successfully deleted product:', productId);
         res.status(204).send();
     }
     catch (error) {

@@ -497,75 +497,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
           <div className="md:hidden">
             <button
               onClick={() => {
-                setIsMenuOpen(!isMenuOpen);
                 if (onMenuClick) onMenuClick();
               }}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
-              {isMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
-              )}
+              <Menu className="block h-6 w-6" aria-hidden="true" />
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-800 shadow-lg rounded-b-lg">
-          {navLinks.map((link) => (
-            <Link href={link.href} key={link.href}>
-              <div
-                className={`px-3 py-2 rounded-md text-base font-medium flex items-center ${
-                  isActive(link.href)
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <span className="mr-2">{link.icon}</span>
-                {link.label}
-              </div>
-            </Link>
-          ))}
-          
-          <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center px-4">
-              <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                  <User className="h-6 w-6 text-gray-500 dark:text-gray-300" />
-                </div>
-              </div>
-              <div className="ml-3">
-                <div className="text-base font-medium text-gray-800 dark:text-gray-100">
-                  {user?.name || 'User'}
-                </div>
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-300">
-                  {user?.email || 'user@example.com'}
-                </div>
-              </div>
-            </div>
-            <div className="mt-3 space-y-1 px-2">
-              <button className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
-                <Bell className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
-                Notifications
-              </button>
-              <button className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 w-full">
-                <Settings className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
-                Settings
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 w-full"
-              >
-                <LogOut className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-300" />
-                Sign out
-              </button>
-            </div>
           </div>
         </div>
       </div>

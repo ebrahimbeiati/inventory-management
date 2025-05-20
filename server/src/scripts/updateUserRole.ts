@@ -6,7 +6,6 @@ async function updateUserToAdmin(email: string) {
     await CognitoService.updateUser(email, {
       'custom:role': 'admin'
     });
-    console.log(`Successfully updated ${email} to admin role`);
   } catch (error) {
     console.error('Error updating user role:', error);
   }
@@ -15,7 +14,6 @@ async function updateUserToAdmin(email: string) {
 // Get email from command line argument
 const email = process.argv[2];
 if (!email) {
-  console.error('Please provide an email address');
   process.exit(1);
 }
 

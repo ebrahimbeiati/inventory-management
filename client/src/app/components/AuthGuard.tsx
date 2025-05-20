@@ -15,7 +15,12 @@ const PUBLIC_ROUTES = [
   '/reports',            // Reports page (public reports)
   '/settings',           // Settings page (UI preferences)
   '/dashboard',          // Dashboard page
-  '/users'               // Users page
+];
+
+// Define admin-only routes
+const ADMIN_ROUTES = [
+  '/users',              // Users management
+  '/products/bulk-update', // Bulk update products
 ];
 
 interface AuthGuardProps {
@@ -37,18 +42,24 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       router.push('/dashboard');
       return;
     }
+
+    // Check if route requires admin access
+    if (ADMIN_ROUTES.includes(pathname)) {
+      if (!user || user.role?.toLowerCase() !== 'admin') {
+        router.push('/login');
+        return;
+      }
+    }
     
+    // Check if route is public
     if (PUBLIC_ROUTES.includes(pathname)) {
       setShowUnauthorized(false);
       return;
     }
     
+    // For all other routes, require authentication
     if (!user) {
-      if (pathname === '/users') {
-        router.push('/login');
-      } else {
-        setShowUnauthorized(true);
-      }
+      setShowUnauthorized(true);
     } else {
       setShowUnauthorized(false);
     }
@@ -93,7 +104,6 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     );
   }
   
-  // If on a public route or user is authenticated, render children
   return <>{children}</>;
 };
 

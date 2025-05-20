@@ -10,10 +10,8 @@ const createTestUser = async () => {
   try {
     // Check if any users exist
     const userCount = await prisma.users.count();
-    console.log('Current user count:', userCount);
 
     if (userCount === 0) {
-      console.log('Creating test user...');
       await prisma.users.create({
         data: {
           userId: uuidv4(),
@@ -24,7 +22,6 @@ const createTestUser = async () => {
           createdAt: new Date().toISOString()
         }
       });
-      console.log('Test user created');
     }
   } catch (error) {
     console.error('Error creating test user:', error);

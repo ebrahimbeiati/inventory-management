@@ -23,8 +23,7 @@ const awsConfig = {
     region: config.aws.region
   }
 };
-// Log config (remove in production)
-console.log('AWS Amplify Config:', JSON.stringify(awsConfig, null, 2));
+
 
 // Validate required configuration
 if (!awsConfig.Auth.Cognito.userPoolId || !awsConfig.Auth.Cognito.userPoolClientId || !awsConfig.Auth.region) {
@@ -38,7 +37,6 @@ if (!awsConfig.Auth.Cognito.userPoolId || !awsConfig.Auth.Cognito.userPoolClient
 
 try {
   Amplify.configure(awsConfig);
-  console.log('Amplify configured successfully');
   
   // Verify the configuration
   const currentConfig = Amplify.getConfig();

@@ -13,7 +13,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // Should be secure in produc
 
 // Validate required environment variables
 if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  console.error('Missing required environment variables: ADMIN_EMAIL, ADMIN_PASSWORD');
   process.exit(1);
 }
 
@@ -38,11 +37,9 @@ async function createAdminUser() {
     });
     
     if (existingAdmin) {
-      console.log('Admin user already exists:', existingAdmin.email);
       return;
     }
     
-    console.log('Creating new admin user...');
     
     // Create admin in Cognito
     await CognitoService.createAdminUser(adminEmail, adminPassword);
@@ -59,10 +56,7 @@ async function createAdminUser() {
         lastLogin: null
       }
     });
-    
-    console.log('Admin user created successfully:');
-    console.log(`Email: ${adminUser.email}`);
-    console.log(`Role: ${adminUser.role}`);
+  
   } catch (error) {
     console.error('Error creating admin user:', error);
   } finally {
@@ -70,12 +64,4 @@ async function createAdminUser() {
   }
 }
 
-// Run the function
 createAdminUser();
-
-// Instructions for use:
-// 1. Run this script with: npx ts-node src/scripts/createAdminUser.ts
-// 2. You can customize the admin user by setting environment variables:
-//    - ADMIN_EMAIL
-//    - ADMIN_PASSWORD
-// 3. In production, make sure to use secure passwords and store them safely 

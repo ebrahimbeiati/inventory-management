@@ -48,7 +48,7 @@ const LanguageSelector = () => {
                         <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md flex items-start gap-2">
                             <Info className="w-4 h-4 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                             <p className="text-sm text-blue-600 dark:text-blue-300">
-                                We're working on adding support for this language. English will be used for now.
+                                We are working on adding support for this language. English will be used for now.
                             </p>
                         </div>
                     )}

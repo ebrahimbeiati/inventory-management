@@ -21,39 +21,31 @@ const verifier = aws_jwt_verify_1.CognitoJwtVerifier.create({
 });
 // Verify user middleware
 const verifyToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+        return;
+    }
     const authHeader = req.headers.authorization;
-    console.log('Auth header:', authHeader);
     if (!authHeader) {
-        console.log('No auth header provided');
         res.status(401).json({ message: 'No token provided' });
         return;
     }
     const token = authHeader.split(' ')[1];
-    console.log('Token received:', token ? 'Yes' : 'No');
     try {
         console.log('Verifying token with Cognito...');
         const payload = yield verifier.verify(token);
-        console.log('Token verified successfully');
-        console.log('User payload:', {
-            userId: payload.sub,
-            email: payload.email,
-            role: payload['custom:role'] || 'Employee'
-        });
         // Find user in database
         const user = yield prisma.users.findUnique({
             where: { userId: payload.sub }
         });
         if (!user) {
-            console.log('User not found in database');
             res.status(401).json({ message: 'Invalid user' });
             return;
         }
         if (user.status !== 'Active') {
-            console.log('User is not active');
             res.status(403).json({ message: 'User account is inactive' });
             return;
         }
-        console.log('User verified:', { userId: user.userId, email: user.email, role: user.role });
         req.user = {
             userId: user.userId,
             email: user.email,
@@ -62,7 +54,6 @@ const verifyToken = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         next();
     }
     catch (error) {
-        console.error('Token verification error:', error);
         res.status(401).json({ message: 'Invalid token' });
     }
 });
@@ -95,7 +86,6 @@ const isActive = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
         next();
     }
     catch (error) {
-        console.error('Error checking user status:', error);
         res.status(500).json({ message: 'Error checking user status' });
     }
 });

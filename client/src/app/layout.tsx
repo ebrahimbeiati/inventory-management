@@ -14,7 +14,7 @@ import AuthGuard from './components/AuthGuard';
 import { AuthProvider } from '@/hooks/useAuth';
 import Login from '@/app//login/page';
 import { AuthProvider as OIDCProvider } from 'react-oidc-context';
-import { config } from '@/config';
+import { config } from '@/utils/config';
 
 const cognitoConfig = {
   authority: `https://cognito-idp.${config.aws.region}.amazonaws.com/${config.aws.cognito.userPoolId}`,
@@ -75,17 +75,10 @@ export default function RootLayout({
                   <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
                     <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
                     
-                    {isMobileMenuOpen && (
-                      <div 
-                        className="md:hidden fixed inset-0 bg-opacity-50 z-20" 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      ></div>
-                    )}
-                    
-                    <div className="flex-1 flex flex-col h-screen overflow-hidden">
-                      <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+                    <div className="flex-1 flex flex-col h-screen overflow-hidden md:ml-64">
+                      <Header onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
                       
-                      <main className="flex-1 overflow-y-auto pt-20 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+                      <main className="flex-1 overflow-y-auto pt-20 px-4 md:px-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
                         {children}
                       </main>
                     </div>

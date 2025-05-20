@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { config } from '@/config';
+import { config } from '@/utils/config';
 import { useRouter } from 'next/navigation';
 
 interface User {

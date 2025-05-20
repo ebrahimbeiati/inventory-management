@@ -7,7 +7,7 @@ import {
   Package, Users, ShoppingCart, BarChart2, 
   Settings, LogOut, User, HelpCircle,
   LineChart, FileText, ChevronLeft, ChevronRight,
-  Menu
+  Menu, X
 } from 'lucide-react';
 // import { useAppSelector } from '@/app/redux'; // removed unused
 import { useAuth } from '@/hooks/useAuth';
@@ -22,7 +22,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { signOut, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Handle logout action
   const handleLogout = () => {
@@ -48,63 +47,75 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Navigation Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between h-16 px-4">
-          <div className="flex items-center space-x-2">
-            <div className="bg-blue-600 text-white p-2 rounded-md">
-              <Package className="w-5 h-5" />
-            </div>
-            <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory Pro</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="absolute top-16 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
-            <nav className="py-2">
-              {navItems.map((item) => (
-                <Link key={item.path} href={item.path}>
-                  <div 
-                    className={`flex items-center px-4 py-3 text-sm font-medium ${
-                      isActive(item.path)
-                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                    onClick={onClose}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="ml-3">{item.label}</span>
-                  </div>
-                </Link>
-              ))}
-              <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span className="ml-3">Logout</span>
-                </button>
+      {/* Mobile Menu - Only visible on mobile */}
+      <div 
+        className={`fixed inset-0 z-50 md:hidden ${
+          isOpen ? 'visible' : 'invisible'
+        }`}
+      >
+        {/* Overlay */}
+        <div 
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+            isOpen ? 'opacity-50' : 'opacity-0'
+          }`}
+          onClick={onClose}
+        />
+        
+        {/* Menu Panel */}
+        <div 
+          className={`absolute top-0 left-0 w-64 h-full bg-white dark:bg-gray-800 transform transition-transform duration-300 ease-in-out ${
+            isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-2">
+              <div className="bg-blue-600 text-white p-2 rounded-md">
+                <Package className="w-5 h-5" />
               </div>
-            </nav>
+              <span className="text-xl font-semibold text-gray-800 dark:text-white">Inventory Pro</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
-        )}
+
+          <nav className="py-2">
+            {navItems.map((item) => (
+              <Link key={item.path} href={item.path}>
+                <div 
+                  className={`flex items-center px-4 py-3 text-sm font-medium ${
+                    isActive(item.path)
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  onClick={onClose}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="ml-3">{item.label}</span>
+                </div>
+              </Link>
+            ))}
+            <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="ml-3">Logout</span>
+              </button>
+            </div>
+          </nav>
+        </div>
       </div>
 
-      {/* Desktop Sidebar */}
-      <aside className={`hidden md:block fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out transform ${
-        isCollapsed ? 'md:w-20' : 'w-64'
-      } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}>
+      {/* Desktop Sidebar - Only visible on desktop */}
+      <aside className="hidden md:block fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out transform bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 w-64">
         {/* Sidebar header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-          <div className={`flex items-center space-x-2 ${isCollapsed ? 'hidden' : ''}`}>
+          <div className="flex items-center space-x-2">
             <div className="bg-blue-600 text-white p-2 rounded-md">
               <Package className="w-5 h-5" />
             </div>
@@ -133,7 +144,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
-                  {!isCollapsed && <span className="ml-3">{item.label}</span>}
+                  <span className="ml-3">{item.label}</span>
                 </div>
               </Link>
             ))}
@@ -146,16 +157,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
                   <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </div>
-                {!isCollapsed && (
-                  <div className="ml-3 text-sm min-w-0 flex-1">
-                    <p className="font-medium text-gray-700 dark:text-gray-300 truncate">
-                      {user?.role || 'User'}
-                    </p>
-                    <p className="text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title={user?.email}>
-                      {user?.email}
-                    </p>
-                  </div>
-                )}
+                <div className="ml-3 text-sm min-w-0 flex-1">
+                  <p className="font-medium text-gray-700 dark:text-gray-300 truncate">
+                    {user?.role || 'User'}
+                  </p>
+                  <p className="text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title={user?.email}>
+                    {user?.email}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={handleLogout}

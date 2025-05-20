@@ -7,7 +7,7 @@ import {
   InitiateAuthCommand,
   RespondToAuthChallengeCommand
 } from "@aws-sdk/client-cognito-identity-provider";
-import { config } from '@/config';
+import { config } from '@/utils/config';
 import { useAuth } from '@/hooks/useAuth';
 import { Home } from 'lucide-react';
 

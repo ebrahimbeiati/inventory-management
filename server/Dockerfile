@@ -6,15 +6,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (including dev dependencies)
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+# Install dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
 
 # Build TypeScript
 RUN npm run build
@@ -24,14 +20,13 @@ FROM node:18-alpine AS runner
 
 WORKDIR /app
 
-# Install ALL dependencies (including dev dependencies for development)
+# Install production dependencies only
 COPY package*.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+RUN npm ci --only=production
 
 # Copy necessary files from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/tsconfig.json ./
 
@@ -41,10 +36,10 @@ RUN addgroup -g 1001 -S nodejs && \
     chown -R nodejs:nodejs /app
 
 # Set environment variables
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 ENV PORT=4000
 
-# Install curl
+# Install curl for healthcheck
 RUN apk add --no-cache curl
 
 # Switch to non-root user
@@ -54,7 +49,7 @@ EXPOSE 4000
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:4000/health || exit 1
 
 # Start the server
 CMD ["npm", "start"] 
