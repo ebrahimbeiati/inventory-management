@@ -6,8 +6,8 @@ on:
       - main
 
 env:
-  AWS_REGION: eu-north-1
-  ECR_REPOSITORY: inventory-management
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: inventory-management-client
   ECS_CLUSTER: inventory-cluster
   ECS_SERVICE: inventory-service
 
@@ -35,8 +35,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-client:$IMAGE_TAG ./client
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY-client:$IMAGE_TAG
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./client
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Build and push server image
         env:
@@ -48,14 +48,4 @@ jobs:
 
       - name: Update ECS services
         run: |
-          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE-client --force-new-deployment
-          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE-server --force-new-deployment
-
-      - name: Install Amplify CLI
-        run: npm install -g @aws-amplify/cli
-
-      - name: Initialize Amplify
-        run: amplify init --yes
-
-      - name: Deploy to Amplify
-        run: amplify publish --yes
+          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment
