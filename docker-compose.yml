@@ -1,21 +1,16 @@
-version: '3.8'
-
 services:
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://server:4000
       - NEXT_PUBLIC_AWS_REGION=${AWS_REGION}
       - NEXT_PUBLIC_COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID}
       - NEXT_PUBLIC_COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID}
-    volumes:
-      - ./client:/app
-      - client_node_modules:/app/node_modules
     depends_on:
       server:
         condition: service_healthy
@@ -24,6 +19,9 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
@@ -31,6 +29,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - app-network
 
   server:
     build:
@@ -44,9 +44,6 @@ services:
       - AWS_REGION=${AWS_REGION}
       - COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID}
       - COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID}
-    volumes:
-      - ./server:/app
-      - server_node_modules:/app/node_modules
     depends_on:
       db:
         condition: service_healthy
@@ -55,6 +52,9 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
@@ -62,6 +62,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - app-network
 
   db:
     image: postgres:14-alpine
@@ -78,6 +80,9 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -85,9 +90,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:
     driver: local
-  server_node_modules:
-  client_node_modules:
+  # client_node_modules: # This named volume is also not needed for this setup

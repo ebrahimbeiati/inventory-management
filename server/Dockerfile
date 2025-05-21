@@ -3,53 +3,54 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Install dependencies first (better layer caching)
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy source code and build
 COPY . .
-
-# Build TypeScript
-RUN npm run build
+RUN npm run build && \
+    npx prisma generate && \
+    npm prune --production && \
+    npm cache clean --force && \
+    rm -rf /root/.npm
 
 # Production stage
 FROM node:18-alpine AS runner
 
 WORKDIR /app
 
-# Install production dependencies only
-COPY package*.json ./
-RUN npm ci --only=production
-
-# Copy necessary files from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/generated ./generated
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/tsconfig.json ./
+# Copy only necessary files from builder
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
+    adduser -S nodejs -u 1001
+
+# Copy and set permissions for entrypoint script
+COPY --chown=nodejs:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Set environment variables
-ENV NODE_ENV=production
-ENV PORT=4000
+ENV NODE_ENV=production \
+    PORT=4000
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install minimal curl for healthcheck and clean up
+RUN apk add --no-cache curl && \
+    rm -rf /var/cache/apk/*
 
 # Switch to non-root user
 USER nodejs
 
+# Expose port
 EXPOSE 4000
 
-# Add healthcheck
+# Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:4000/health || exit 1
 
-# Start the server
-CMD ["npm", "start"] 
+# Start the application
+ENTRYPOINT ["/app/docker-entrypoint.sh"] 

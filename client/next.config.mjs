@@ -29,6 +29,7 @@ const nextConfig = {
     NEXT_PUBLIC_COGNITO_CLIENT_ID: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL
   },
+  output: 'standalone',
 };
 
 export default nextConfig; 
