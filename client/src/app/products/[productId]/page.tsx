@@ -456,7 +456,7 @@ export default function ProductDetails() {
               <h3 className="text-lg font-bold dark:text-white">Confirm Deletion</h3>
             </div>
             <p className="mb-6 dark:text-gray-300">
-              Are you sure you want to delete "{product.name}"? This action cannot be undone.
+              Are you sure you want to delete &ldquo;{product.name}&rdquo;? This action cannot be undone.
             </p>
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-3 space-y-reverse sm:space-y-0 sm:space-x-3">
               <button

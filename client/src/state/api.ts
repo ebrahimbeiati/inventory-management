@@ -66,7 +66,7 @@ export interface User {
   role: string;
   status: string;
   createdAt?: string;
-  lastLogin?: string;
+  // lastLogin?: string;
 }
 
 export interface NewUser {
@@ -89,6 +89,7 @@ export const api = createApi({
     prepareHeaders: (headers) => {
       // Get the ID token from localStorage
       const idToken = localStorage.getItem('idToken');
+      console.log('API Request - Base URL:', config.api.baseUrl);
       console.log('API Request - ID Token present:', !!idToken);
       
       if (idToken) {

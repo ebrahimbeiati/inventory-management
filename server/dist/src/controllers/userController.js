@@ -19,9 +19,7 @@ const createTestUser = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Check if any users exist
         const userCount = yield prisma.users.count();
-        console.log('Current user count:', userCount);
         if (userCount === 0) {
-            console.log('Creating test user...');
             yield prisma.users.create({
                 data: {
                     userId: (0, uuid_1.v4)(),
@@ -32,7 +30,6 @@ const createTestUser = () => __awaiter(void 0, void 0, void 0, function* () {
                     createdAt: new Date().toISOString()
                 }
             });
-            console.log('Test user created');
         }
     }
     catch (error) {
@@ -241,8 +238,25 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         // Authenticate with Cognito
         try {
-            const { token, user } = yield cognitoService_1.CognitoService.signIn(email, password);
-            res.json({ token, user });
+            const { token, user: cognitoUser } = yield cognitoService_1.CognitoService.signIn(email, password);
+            // After successful Cognito authentication, find the user in the local DB
+            // and update their lastLogin time.
+            // Note: Cognito 'user' object might have a 'username' or 'sub' field for the unique ID.
+            // We're assuming 'email' is the link here, adjust if your Cognito setup uses a different attribute.
+            if (cognitoUser && cognitoUser.email) {
+                try {
+                    yield prisma.users.updateMany({
+                        where: { email: cognitoUser.email }, // or cognitoUser.username if that's the ID
+                        data: { lastLogin: new Date() },
+                    });
+                    console.log(`Updated lastLogin for user: ${cognitoUser.email}`);
+                }
+                catch (dbError) {
+                    // Log this error but don't fail the login, as authentication was successful
+                    console.error(`Failed to update lastLogin for user ${cognitoUser.email}:`, dbError);
+                }
+            }
+            res.json({ token, user: cognitoUser }); // Send Cognito user object back, or your local DB user if preferred
         }
         catch (authError) {
             console.error('Cognito authentication failed:', authError);

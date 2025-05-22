@@ -15,7 +15,6 @@ interface SidebarLinkProps {
 }
 
 const SidebarLink = React.memo(({
-  href,
   icon: Icon,
   label,
   isCollapsed,

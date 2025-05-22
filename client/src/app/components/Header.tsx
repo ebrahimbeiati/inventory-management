@@ -1,183 +1,98 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Package, 
   BarChart2, 
-  Settings, 
-  User, 
   Menu, 
   X, 
-  LogOut,
+  Search,
+  User,
   ShoppingCart,
   Bell,
-  Search,
-  Sun,
-  Moon,
-  Globe,
-  ChevronDown,
-  Info,
-  Star,
-  StarHalf,
-  StarOff,
-  Search as SearchIcon,
-  Sparkles,
-  Check,
-  Languages,
-  AlertCircle
+  AlertTriangle
 } from 'lucide-react';
-import { useAppSelector, useAppDispatch } from '@/app/redux';
-import { setIsDarkMode } from '@/state';
 import { useAuth } from '@/hooks/useAuth';
+import { useGetProductsQuery } from "@/state/api";
 
 interface HeaderProps {
   onMenuClick?: () => void;
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [showLanguageNote, setShowLanguageNote] = useState(false);
-  const [hoveredLanguage, setHoveredLanguage] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showNotificationTooltip, setShowNotificationTooltip] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const { data: products, isLoading: isLoadingProducts, error: productsError } = useGetProductsQuery();
 
-  // Add dark mode state and toggle
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const dispatch = useAppDispatch();
+  // Calculate notifications
+  const lowStockProducts = products?.filter(p => p.stockQuantity < 5 && p.stockQuantity > 0) || [];
+  const outOfStockProducts = products?.filter(p => p.stockQuantity === 0) || [];
+  const lowStockCount = lowStockProducts.length;
+  const outOfStockCount = outOfStockProducts.length;
+  const totalAlerts = lowStockCount + outOfStockCount;
 
-  const toggleDarkMode = () => {
-    dispatch(setIsDarkMode(!isDarkMode));
-  };
-
-  const languageCategories = {
-    all: 'All Languages',
-    popular: 'Popular',
-    european: 'European',
-    asian: 'Asian',
-    middleEast: 'Middle East'
-  };
-
-  const languages = [
-    { 
-      code: 'en', 
-      name: 'English', 
-      flag: '🇺🇸',
-      greeting: 'Hello!',
-      color: 'from-blue-500 to-blue-600'
-    },
-    { 
-      code: 'es', 
-      name: 'Español', 
-      flag: '🇪🇸',
-      greeting: '¡Hola!',
-      color: 'from-red-500 to-red-600'
-    },
-    { 
-      code: 'fr', 
-      name: 'Français', 
-      flag: '🇫🇷',
-      greeting: 'Bonjour!',
-      color: 'from-blue-400 to-blue-500'
-    },
-    { 
-      code: 'de', 
-      name: 'Deutsch', 
-      flag: '🇩🇪',
-      greeting: 'Hallo!',
-      color: 'from-yellow-500 to-yellow-600'
-    }
-  ];
-
-  const filteredLanguages = languages.filter(lang => {
-    const matchesSearch = lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         lang.code.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || lang.code === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const getProficiencyIcon = (proficiency: string) => {
-    switch (proficiency) {
-      case 'complete':
-        return <Star className="w-4 h-4 text-yellow-400" />;
-      case 'partial':
-        return <StarHalf className="w-4 h-4 text-yellow-400" />;
-      case 'planned':
-        return <StarOff className="w-4 h-4 text-gray-400" />;
-      default:
-        return null;
-    }
-  };
-
-  const handleLanguageChange = (langCode: string) => {
-    if (langCode !== 'en') {
-      setShowLanguageNote(true);
-      setTimeout(() => {
-        setShowLanguageNote(false);
-        setSelectedLanguage('en');
-      }, 2000);
+  useEffect(() => {
+    if (isLoadingProducts) {
+      console.log('Loading products...');
+    } else if (productsError) {
+      console.error('Error loading products:', productsError);
     } else {
-      setSelectedLanguage(langCode);
+      console.log('Products loaded:', products);
+      console.log('Low stock count:', lowStockCount);
+      console.log('Out of stock count:', outOfStockCount);
+      console.log('Total alerts:', totalAlerts);
     }
-    setIsLanguageOpen(false);
+  }, [products, isLoadingProducts, productsError, lowStockCount, outOfStockCount, totalAlerts]);
+
+  // Handle mobile menu
+  const handleMobileMenuClick = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+    if (onMenuClick) {
+      onMenuClick();
+    }
   };
 
-  // Close dropdown when clicking outside
+  // Close mobile menu on route change
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.language-selector')) {
-        setIsLanguageOpen(false);
-      }
-    };
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+  // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate to products page with search term
     if (searchTerm.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
     } else {
       router.push('/products');
     }
-    // Reset search state
     setSearchTerm('');
-    setIsSearchOpen(false);
   };
 
+  // Handle logout
   const handleLogout = () => {
     signOut();
     router.push('/login');
+    setIsUserMenuOpen(false);
   };
 
-  const isActive = (path: string) => {
-    return pathname === path;
-  };
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const isActive = (path: string) => pathname === path;
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: <BarChart2 className="w-5 h-5" /> },
@@ -185,41 +100,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
     { href: '/products/bulk-update', label: 'Bulk Update', icon: <ShoppingCart className="w-5 h-5" /> },
   ];
 
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  // Add refs for dropdowns
-  const notificationRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
-  // Click outside to close notifications and user menu
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        isNotificationsOpen &&
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setIsNotificationsOpen(false);
-      }
-      if (
-        isUserMenuOpen &&
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsUserMenuOpen(false);
-      }
-    }
-    if (isNotificationsOpen || isUserMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isNotificationsOpen, isUserMenuOpen]);
-
   return (
     <header className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
       isScrolled 
-        ? 'bg-white dark:bg-gray-800 shadow-md' 
-        : 'bg-white/90 dark:bg-gray-800/95 backdrop-blur-md'
+        ? 'bg-white shadow-md' 
+        : 'bg-white/90 backdrop-blur-md'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -230,7 +115,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 <div className="bg-blue-600 text-white p-2 rounded-md">
                   <Package className="w-5 h-5" />
                 </div>
-                <span className="ml-2 font-bold text-lg text-gray-900 dark:text-white">Inventory Pro</span>
+                <span className="ml-2 font-bold text-lg text-gray-900">Inventory Pro</span>
               </div>
             </Link>
           </div>
@@ -239,13 +124,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
           <nav className="hidden md:flex items-center space-x-1">
             {navLinks.map((link) => (
               <Link href={link.href} key={link.href}>
-                <div
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors ${
-                    isActive(link.href)
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                >
+                <div className={`px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors ${
+                  isActive(link.href)
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}>
                   <span className="mr-2">{link.icon}</span>
                   {link.label}
                 </div>
@@ -253,295 +136,159 @@ export default function Header({ onMenuClick }: HeaderProps) {
             ))}
           </nav>
 
-          {/* Desktop Right Menu */}
-          <div className="hidden md:flex items-center space-x-2">
+          {/* Search and Actions */}
+          <div className="flex items-center space-x-4">
             {/* Search */}
-            {isSearchOpen ? (
-              <form onSubmit={handleSearch} className="relative">
+            <div className="relative hidden md:block">
+              <form onSubmit={handleSearch} className="flex items-center">
                 <input
                   type="text"
                   placeholder="Search products..."
-                  className="pl-10 pr-4 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 
-                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                  className="w-64 pl-10 pr-4 py-2 rounded-lg border border-gray-300 
+                    bg-white text-gray-900
+                    focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  autoFocus
                 />
-                <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 absolute left-3 top-2" />
-                <button
-                  type="button"
-                  className="absolute right-2 top-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                  onClick={() => setIsSearchOpen(false)}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <Search className="w-5 h-5 text-gray-500 absolute left-3 top-2.5" />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
               </form>
-            ) : (
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            )}
-
-            {/* Language Selector */}
-            <div className="relative language-selector">
-              <button
-                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-300 shadow-sm hover:shadow-md"
-              >
-                <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-20 blur transition-opacity duration-300" />
-                  <Globe className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors duration-300" />
-                </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                  {languages.find(lang => lang.code === selectedLanguage)?.flag}
-                </span>
-                <ChevronDown 
-                  className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-all duration-300 ${
-                    isLanguageOpen ? 'rotate-180 text-blue-500 dark:text-blue-400' : ''
-                  }`} 
-                />
-              </button>
-
-              {/* Language Dropdown */}
-              {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50 animate-fadeIn overflow-hidden">
-                  <div className="p-2">
-                    {languages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => handleLanguageChange(lang.code)}
-                        onMouseEnter={() => setHoveredLanguage(lang.code)}
-                        onMouseLeave={() => setHoveredLanguage(null)}
-                        className={`relative group flex items-center justify-between w-full px-4 py-3 text-sm transition-all duration-300 rounded-xl ${
-                          selectedLanguage === lang.code
-                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-800/50'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <div className={`absolute -inset-1 bg-gradient-to-r ${lang.color} rounded-full opacity-0 group-hover:opacity-20 blur transition-opacity duration-300`} />
-                            <span className="text-xl relative">{lang.flag}</span>
-                          </div>
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium text-gray-700 dark:text-gray-200">
-                              {lang.name}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {hoveredLanguage === lang.code ? lang.greeting : ''}
-                            </span>
-                          </div>
-                        </div>
-                        {selectedLanguage === lang.code && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                              Active
-                            </span>
-                            <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Notifications */}
+            {/* Notification Bell */}
             <div className="relative">
-              <button 
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              <button
+                onClick={() => router.push('/products')}
+                onMouseEnter={() => setShowNotificationTooltip(true)}
+                onMouseLeave={() => setShowNotificationTooltip(false)}
+                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 relative"
+                title="Stock Alerts"
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  3
+                {!isLoadingProducts && totalAlerts > 0 && (
+                  <>
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                      {totalAlerts}
+                    </span>
+                    {/* Tooltip */}
+                    {showNotificationTooltip && (
+                      <div 
+                        className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 z-[9999] text-left border border-gray-200 dark:border-gray-700"
+                        style={{ transform: 'translateY(8px)' }}
+                      >
+                        <div className="space-y-3">
+                          {lowStockCount > 0 && (
+                            <div className="flex items-center text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+                              <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+                              <span className="text-sm">{lowStockCount} {lowStockCount === 1 ? 'product' : 'products'} low in stock</span>
+                            </div>
+                          )}
+                          {outOfStockCount > 0 && (
+                            <div className="flex items-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                              <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+                              <span className="text-sm">{outOfStockCount} {outOfStockCount === 1 ? 'product' : 'products'} out of stock</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* User Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                  {user?.name ? (
+                    <span className="text-blue-600 font-medium">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  ) : (
+                    <User className="w-5 h-5" />
+                  )}
+                </div>
+                <span className="hidden md:block text-sm font-medium text-gray-700">
+                  {user?.name || 'User'}
                 </span>
               </button>
-              
-              {/* Notifications Dropdown */}
-              {isNotificationsOpen && (
-                <div ref={notificationRef} className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                            <Package className="w-4 h-4 text-blue-600 dark:text-blue-300" />
-                          </div>
-                        </div>
-                        <div className="ml-3 w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">Low Stock Alert</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Product "Widget X" is running low on stock</p>
-                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">2 minutes ago</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                            <Check className="w-4 h-4 text-green-600 dark:text-green-300" />
-                          </div>
-                        </div>
-                        <div className="ml-3 w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">Order Completed</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Order #12345 has been completed</p>
-                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">1 hour ago</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-                            <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
-                          </div>
-                        </div>
-                        <div className="ml-3 w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">System Update</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">New features have been added to the dashboard</p>
-                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">2 hours ago</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                    <button className="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium">
-                      View all notifications
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            {/* User Profile */}
-            <div className="relative">
-              <button 
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center p-1.5 rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <User className="w-5 h-5" />
-              </button>
-              
-              {/* User Menu Dropdown */}
+              {/* User Dropdown */}
               {isUserMenuOpen && (
-                <div ref={userMenuRef} className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 dark:ring-white/5 focus:outline-none z-50">
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                          <User className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-                        </div>
-                      </div>
-                      <div className="ml-3 min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={user?.email || 'User'}>
-                          {user?.email || 'User'}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
-                          {user?.role || 'user'}
-                        </p>
-                      </div>
-                    </div>
+                <div className="absolute right-0 mt-2 w-64 py-2 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div className="px-4 py-2 border-b border-gray-200">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user?.email || ''}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1 capitalize">
+                      Role: {user?.role || 'User'}
+                    </p>
                   </div>
-                  <div className="py-1">
-                    {user ? (
-                      <>
-                        <Link href="/settings">
-                          <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                            Settings
-                          </div>
-                        </Link>
-                        <button 
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Sign out
-                        </button>
-                      </>
-                    ) : (
-                      <Link href="/login">
-                        <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                          Sign in
-                        </div>
-                      </Link>
-                    )}
-                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* Dark Mode Toggle Button */}
-            <button 
-              onClick={toggleDarkMode}
-              className="relative p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-              aria-label="Toggle Dark Mode"
-              title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </button>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button
-              onClick={() => {
-                if (onMenuClick) onMenuClick();
-              }}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              aria-expanded="false"
+              onClick={handleMobileMenuClick}
+              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+              aria-label="Open menu"
             >
-              <span className="sr-only">Open main menu</span>
-              <Menu className="block h-6 w-6" aria-hidden="true" />
+              <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Language Note */}
-      {showLanguageNote && (
-        <div className="fixed top-4 right-4 bg-white dark:bg-gray-800 px-4 py-3 rounded-xl text-sm text-gray-700 dark:text-gray-200 shadow-xl z-50 animate-slideIn border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Languages className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              <Sparkles className="w-3 h-3 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
+        {/* Mobile Search - Only visible on mobile */}
+        <div className="md:hidden py-2">
+          <form onSubmit={handleSearch} className="flex items-center">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search products..."
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 
+                  bg-white text-gray-900
+                  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="w-5 h-5 text-gray-500 absolute left-3 top-2.5" />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
-            <p>Language support coming soon!</p>
-          </div>
+          </form>
         </div>
-      )}
+      </div>
     </header>
   );
 }
-
-// Add these styles to your global CSS file
-const styles = `
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%) scale(0.95); opacity: 0; }
-  to { transform: translateX(0) scale(1); opacity: 1; }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animate-slideIn {
-  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-`; 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useGetProductsQuery, useUpdateProductMutation } from "@/state/api";
 import Header from "@/app/(components)/Header";
-import { ArrowLeft, Check, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function BulkUpdatePage() {

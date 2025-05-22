@@ -275,7 +275,7 @@ export default function Products() {
     );
 
     return (
-        <div className="mx-auto pb-5 w-full px-4 sm:px-6 lg:px-8 ml-0 sm:ml-64">
+        <div className="mx-auto pb-5 px-4 sm:px-6 lg:px-8 ml-0 sm:ml-64 mt-4 ">
             <div className="py-6">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Products Management</h1>
                 <p className="text-gray-600 dark:text-gray-400">Manage your inventory products</p>

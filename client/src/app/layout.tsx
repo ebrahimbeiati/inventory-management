@@ -8,7 +8,6 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { useState, useEffect } from 'react';
 import LowStockAlert from './components/LowStockAlert';
-import ThemeProvider from './components/ThemeProvider';
 import { usePathname } from 'next/navigation';
 import AuthGuard from './components/AuthGuard';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -61,24 +60,22 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en" className="light">
-      <body className={`${inter.className} bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200`}>
-        <OIDCProvider {...cognitoConfig}>
+    <html lang="en">
+      <body className={inter.className}>
+      <OIDCProvider {...cognitoConfig}>
           <Provider store={store}>
             <AuthProvider>
-              <ThemeProvider />
-  
               <AuthGuard>
                 {isLoginPage ? (
                   <Login />
                 ) : (
-                  <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+                  <div className="flex h-screen bg-gray-50">
                     <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
                     
                     <div className="flex-1 flex flex-col h-screen overflow-hidden md:ml-64">
                       <Header onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
                       
-                      <main className="flex-1 overflow-y-auto pt-20 px-4 md:px-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+                      <main className="flex-1 overflow-y-auto pt-20 px-4 md:px-6 bg-gray-50 text-gray-900">
                         {children}
                       </main>
                     </div>

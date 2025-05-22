@@ -14,14 +14,21 @@ model Users {
   role      String   // or use enum if you have fixed roles
   status    String   // or use enum if you have fixed statuses
   createdAt DateTime @default(now())
+  lastLogin DateTime? // Added to track the last login timestamp
 }
 
 model Products {
-  productId     String      @id
+  productId     String    @id
   name          String
   price         Float
-  rating        Float?
   stockQuantity Int
+  description   String?   // Optional: product description
+  category      String?   // Optional: product category
+  tags          String?   // Optional: comma-separated tags
+  imageUrl      String?   // Optional: URL for product image
+  rating        Float?    // Optional: product rating (e.g., 1-5)
+  createdAt     DateTime  @default(now()) // Track creation date
+  updatedAt     DateTime  @updatedAt // Track update date
   Sales         Sales[]
   Purchases     Purchases[]
 }
