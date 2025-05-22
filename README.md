@@ -99,7 +99,7 @@ A modern, full-stack inventory management application built with Next.js, Node.j
 
 ### Client (.env.local)
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
