@@ -29,11 +29,18 @@ app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
     origin: [
         process.env.CLIENT_URL || 'http://localhost:3000',
-        'https://main.d1db78gc9kkh9d.amplifyapp.com'
+        'https://main.djj7vdyhtmukn.amplifyapp.com'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Amz-Date',
+        'X-Api-Key',
+        'X-Amz-Security-Token'
+    ],
+    exposedHeaders: ['*']
 }));
 /* ROUTES */
 app.get("/health", (req, res) => {
