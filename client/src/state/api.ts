@@ -86,7 +86,7 @@ interface ApiError {
 export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: config.api.baseUrl,
-    credentials: 'same-origin',
+    credentials: 'include',
     prepareHeaders: (headers) => {
       // Get the ID token from localStorage
       const idToken = localStorage.getItem('idToken');
