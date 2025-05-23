@@ -1,106 +1,80 @@
-"use client"
-import { useAppSelector } from '../../redux';
-import { useAppDispatch } from '../../redux';
-import { setIsSidebarCollapsed, setIsDarkMode } from '../../../state';
-import { MenuSquare, Bell, Sun, Moon, Settings, Globe } from 'lucide-react'
-import Link from 'next/link';
-import React, { useState } from 'react'
+"use client";
 
-export default function Navbar() {
-    const dispatch = useAppDispatch();
-    const isSidebarCollapsed = useAppSelector(
-        (state) => state.global.isSidebarCollapsed
-    );
-    const [showLanguageNote, setShowLanguageNote] = useState(false);
+import { useAppDispatch, useAppSelector } from "@/app/redux";
+import { setIsDarkMode, setIsSidebarCollapsed } from "@/state";
+import { Bell, Menu, Moon, Settings, Sun } from "lucide-react";
+import Link from "next/link";
+import React from "react";
 
-    const toggleSidebar = () => {
-        dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
-    };
-    const isDarkMode = useAppSelector(
-        (state) => state.global.isDarkMode
-    );
-    const toggleDarkMode = () => {
-        const newState = !isDarkMode;
-        dispatch(setIsDarkMode(newState));
-        
-        // Apply the change immediately
-        if (newState) {
-            document.documentElement.classList.add("dark");
-            document.documentElement.classList.remove("light");
-        } else {
-            document.documentElement.classList.remove("dark");
-            document.documentElement.classList.add("light");
-        }
-    };
+const Navbar = () => {
+  const dispatch = useAppDispatch();
+  const isSidebarCollapsed = useAppSelector(
+    (state) => state.global.isSidebarCollapsed
+  );
+  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-    const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        if (e.target.value !== 'en') {
-            setShowLanguageNote(true);
-            setTimeout(() => {
-                setShowLanguageNote(false);
-                e.target.value = 'en';
-            }, 3000);
-        }
-    };
+  const toggleSidebar = () => {
+    dispatch(setIsSidebarCollapsed(!isSidebarCollapsed));
+  };
 
-    return (
-        <div className={`flex items-center justify-between w-full mb-10`}> 
-            <div className={`flex justify-between items-center gap-5`}>
-                <button className={`flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-gray-200`} onClick={toggleSidebar}>
-                    <MenuSquare className={`w-5 h-5`} />
-                </button>
-            </div>
-            <div className="relative">
-                <input type="search" placeholder='Search...' className={`pl-10 pr-4 py-2 w-50 md:w-60 rounded-md border border-gray-300 dark:border-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200`} />
-                <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none pl-3'>
-                    <Bell className="w-5 h-5 text-gray-500" />
-                </div>
-            </div>
-            {/* rightside */}
-            <div className={`flex justify-between items-center gap-2`}>
-                <div className='flex items-center gap-2 justify-between'>
-                    <div>
-                        <button onClick={toggleDarkMode} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                            {isDarkMode ? (
-                                <Sun className="w-5 h-5 text-gray-500 dark:text-gray-300" />
-                            ) : (
-                                <Moon className="w-5 h-5 text-gray-500" />
-                            )}
-                        </button>
-                    </div>
-                    {/* Language Selector */}
-                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700">
-                        <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <select 
-                            className="bg-transparent text-sm text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
-                            defaultValue="en"
-                            onChange={handleLanguageChange}
-                        >
-                            <option value="en">English</option>
-                            <option value="es">Español</option>
-                            <option value="fr">Français</option>
-                            <option value="de">Deutsch</option>
-                        </select>
-                    </div>
-                    {showLanguageNote && (
-                        <div className="fixed top-4 right-4 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm text-blue-600 dark:text-blue-300 shadow-lg z-50">
-                            Language support coming soon
-                        </div>
-                    )}
-                    <div className='relative hidden md:block'>
-                        <Bell className="w-5 h-5 text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" />
-                        <span className='absolute -top-3 -right-2 bg-red-500 text-white inline-flex items-center justify-center rounded-full text-xs px-[0.4rem] '>
-                            1
-                        </span>
-                    </div>
-                    <hr className='w-0 md:w-px h-5 bg-gray-200 dark:bg-gray-700 border-solid border-l border-gray-400 dark:border-gray-600 hidden md:block' />
-                    <div className="flex items-center gap-2 cursor-pointer hidden md:flex">image</div>
-                    <span className='font-semibold text-gray-500 dark:text-gray-300 hidden md:inline'>Ebrahim</span>
-                </div>
-                <Link href="/settings">
-                    <Settings className="w-5 h-5 text-gray-500 hover:text-gray-900 dark:hover:text-gray-200" />
-                </Link>
-            </div>
+  const toggleDarkMode = () => {
+    dispatch(setIsDarkMode(!isDarkMode));
+  };
+
+  return (
+    <div className="flex justify-between items-center w-full mb-7">
+      {/* LEFT SIDE */}
+      <div className="flex justify-between items-center gap-5">
+        <button
+          className="px-3 py-3 bg-gray-100 rounded-full hover:bg-blue-100"
+          onClick={toggleSidebar}
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+
+        <div className="relative">
+          <input
+            type="search"
+            placeholder="Start type to search groups & products"
+            className="pl-10 pr-4 py-2 w-50 md:w-60 border-2 border-gray-300 bg-white rounded-lg focus:outline-none focus:border-blue-500"
+          />
+
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-non">
+            <Bell className="text-gray-500" size={20} />
+          </div>
         </div>
-    );
-}
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="flex justify-between items-center gap-5">
+        <div className="hidden md:flex justify-between items-center gap-5">
+          <div>
+            <button onClick={toggleDarkMode}>
+              {isDarkMode ? (
+                <Sun className="cursor-pointer text-gray-500" size={24} />
+              ) : (
+                <Moon className="cursor-pointer text-gray-500" size={24} />
+              )}
+            </button>
+          </div>
+          <div className="relative">
+            <Bell className="cursor-pointer text-gray-500" size={24} />
+            <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-[0.4rem] py-1 text-xs font-semibold leading-none text-red-100 bg-red-400 rounded-full">
+              3
+            </span>
+          </div>
+          <hr className="w-0 h-7 border border-solid border-l border-gray-300 mx-3" />
+          <div className="flex items-center gap-3 cursor-pointer">
+            
+            <span className="font-semibold">TradePro</span>
+          </div>
+        </div>
+        <Link href="/settings">
+          <Settings className="cursor-pointer text-gray-500" size={24} />
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default Navbar;

@@ -45,14 +45,13 @@ const getDashboardMetrics = (req, res) => __awaiter(void 0, void 0, void 0, func
             },
         });
         const expenseByCategorySummary = expenseByCategorySummaryRaw.map((item) => (Object.assign(Object.assign({}, item), { amount: item.amount.toString() })));
-        const response = {
+        res.json({
             popularProducts,
             salesSummary,
             purchaseSummary,
             expenseSummary,
             expenseByCategorySummary,
-        };
-        res.json(response);
+        });
     }
     catch (error) {
         res.status(500).json({ message: "Error retrieving dashboard metrics" });

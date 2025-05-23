@@ -1,7 +1,7 @@
 "use client"
 import { useAppDispatch, useAppSelector } from '../../redux'
 import { setIsSidebarCollapsed } from '../../../state';
-import { Archive, ChevronLeft, CircleDollarSign, Clipboard, Layout, LucideIcon, SlidersHorizontal, User } from 'lucide-react'
+import { Archive, ChevronLeft, CircleDollarSign, Clipboard, Layout, LucideIcon, LineChart, User, FileText } from 'lucide-react'
 import React, { useEffect, useState, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -98,17 +98,18 @@ export default function Sidebar() {
     return () => clearInterval(animationInterval);
   }, []);
   
-  const sidebarClassNames = `fixed left-0 top-0 flex flex-col ${
-    isSidebarCollapsed ? "w-0 md:w-16" : "w-64 md:w-64"
-  } bg-white dark:bg-gray-800 transition-all duration-300 overflow-hidden h-screen shadow-md z-30`;
+  const sidebarClassNames = `h-full flex flex-col ${
+    isSidebarCollapsed ? "w-16" : "w-64"
+  } bg-white dark:bg-gray-800 transition-all duration-300`;
 
   const navItems = [
     { href: "/dashboard", icon: Layout, label: "Dashboard" },
     { href: "/inventory", icon: Archive, label: "Inventory" },
     { href: "/products", icon: Clipboard, label: "Products" },
+    { href: "/expenses", icon: CircleDollarSign, label: "Expenses" },
+    { href: "/analytics", icon: LineChart, label: "Analytics" },
+    { href: "/reports", icon: FileText, label: "Reports" },
     { href: "/users", icon: User, label: "Users" },
-    { href: "/settings", icon: SlidersHorizontal, label: "Settings" },
-    { href: "/expenses", icon: CircleDollarSign, label: "Expenses" }
   ];
 
   return (
@@ -116,7 +117,7 @@ export default function Sidebar() {
       {/* Header */}
       <div className='flex items-center justify-between p-4 border-b dark:border-gray-700'>
         {!isSidebarCollapsed && (
-          <>
+          <div className='flex items-center justify-between w-full'>
             <div className='flex items-center gap-2'>
               <div 
                 className={`w-8 h-8 bg-amber-200 dark:bg-amber-700 rounded-full flex items-center justify-center ${isSidebarCollapsed ? "px-5" : "px-8"}`}
@@ -126,10 +127,10 @@ export default function Sidebar() {
                   className={`font-bold ${isAnimating ? 'animate-pulse transition-all duration-300 text-blue-800 dark:text-blue-200 scale-150' : ''}`}
                   onAnimationEnd={() => setIsAnimating(false)}
                 >
-                  E
+                  TP
                 </span>
               </div>
-              <h1 className={`font-extrabold text-lg ${isSidebarCollapsed ? "hidden" : "block"} dark:text-white`}>EBISTOCK</h1>
+              <h1 className={`font-extrabold text-lg ${isSidebarCollapsed ? "hidden" : "block"} dark:text-white`}>TradePro</h1>
             </div>
             <button 
               onClick={toggleSidebar}
@@ -137,31 +138,33 @@ export default function Sidebar() {
             >
               <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
             </button>
-          </>
+          </div>
         )}
         
         {isSidebarCollapsed && (
-          <button 
-            onClick={toggleSidebar}
-            className='w-full flex justify-center p-1 hover:bg-gray-100 dark:hover:bg-gray-700'
-          >
-            <div 
-              className={`w-8 h-8 bg-amber-200 dark:bg-amber-700 rounded-full flex items-center justify-center ${isSidebarCollapsed ? "px-5" : "px-8"}`}
-              onClick={() => setIsAnimating(true)}
+          <div className='w-full flex justify-center'>
+            <button 
+              onClick={toggleSidebar}
+              className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700'
             >
-              <span 
-                className={`font-bold ${isAnimating ? 'animate-pulse transition-all duration-300 text-blue-800 dark:text-blue-200 scale-150' : ''}`}
-                onAnimationEnd={() => setIsAnimating(false)}
+              <div 
+                className={`w-8 h-8 bg-amber-200 dark:bg-amber-700 rounded-full flex items-center justify-center ${isSidebarCollapsed ? "px-5" : "px-8"}`}
+                onClick={() => setIsAnimating(true)}
               >
-                E
-              </span>
-            </div>
-          </button>
+                <span 
+                  className={`font-bold ${isAnimating ? 'animate-pulse transition-all duration-300 text-blue-800 dark:text-blue-200 scale-150' : ''}`}
+                  onAnimationEnd={() => setIsAnimating(false)}
+                >
+                  TP
+                </span>
+              </div>
+            </button>
+          </div>
         )}
       </div>
       
       {/* Links Section */}
-      <div className='flex-grow overflow-y-auto p-3'>
+      <div className='flex-grow overflow-y-auto p-3 space-y-1'>
         {navItems.map((item) => (
           <SidebarLink
             key={item.href}

@@ -1,259 +1,360 @@
 "use client";
 
-import React, { useState } from "react";
-import Header from "@/app/(components)/Header";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { useState } from "react";
+import {
+  BarChart3,
+  DollarSign,
+  ShoppingCart,
+  Users,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  Download,
+} from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
-  AreaChart,
-  Area
-} from 'recharts';
-import { 
-  TrendingUp, 
-  Package, 
-  DollarSign, 
-  Users, 
-  Download, 
-  Calendar,
-  ArrowUp,
-  ArrowDown,
-  Filter
-} from "lucide-react";
+} from "recharts";
 
-const Analytics = () => {
-  const [dateRange, setDateRange] = useState('month');
-  const [selectedMetric, setSelectedMetric] = useState('sales');
+interface Metric {
+  id: string;
+  label: string;
+  value: number;
+  change: number;
+  trend: "up" | "down";
+  icon: React.ElementType;
+}
 
-  // Sample data - replace with actual API data
-  const salesData = [
-    { name: 'Jan', sales: 4000, revenue: 2400 },
-    { name: 'Feb', sales: 3000, revenue: 1398 },
-    { name: 'Mar', sales: 2000, revenue: 9800 },
-    { name: 'Apr', sales: 2780, revenue: 3908 },
-    { name: 'May', sales: 1890, revenue: 4800 },
-    { name: 'Jun', sales: 2390, revenue: 3800 }
-  ];
+interface SalesData {
+  date: string;
+  revenue: number;
+  orders: number;
+}
 
-  const inventoryData = [
-    { name: 'Electronics', value: 400 },
-    { name: 'Clothing', value: 300 },
-    { name: 'Food', value: 300 },
-    { name: 'Books', value: 200 }
-  ];
+interface CategoryData {
+  name: string;
+  value: number;
+  color: string;
+}
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const mockSalesData: SalesData[] = [
+  { date: "2024-01", revenue: 15000, orders: 120 },
+  { date: "2024-02", revenue: 18000, orders: 150 },
+  { date: "2024-03", revenue: 22000, orders: 180 },
+  { date: "2024-04", revenue: 25000, orders: 200 },
+  { date: "2024-05", revenue: 28000, orders: 220 },
+  { date: "2024-06", revenue: 30000, orders: 240 },
+];
 
-  const metrics = [
+const mockCategoryData: CategoryData[] = [
+  { name: "Electronics", value: 35, color: "#3B82F6" },
+  { name: "Clothing", value: 25, color: "#22C55E" },
+  { name: "Books", value: 20, color: "#F59E0B" },
+  { name: "Home & Garden", value: 15, color: "#EF4444" },
+  { name: "Others", value: 5, color: "#8B5CF6" },
+];
+
+const AnalyticsPage = () => {
+  const [dateRange, setDateRange] = useState("last30days");
+
+  const metrics: Metric[] = [
     {
-      title: "Total Sales",
-      value: "$24,500",
-      change: "+12.5%",
+      id: "revenue",
+      label: "Total Revenue",
+      value: 138000,
+      change: 12.5,
       trend: "up",
-      icon: <DollarSign className="w-6 h-6 text-green-500" />
+      icon: DollarSign,
     },
     {
-      title: "Inventory Items",
-      value: "1,234",
-      change: "-2.3%",
+      id: "orders",
+      label: "Total Orders",
+      value: 1110,
+      change: 8.3,
+      trend: "up",
+      icon: ShoppingCart,
+    },
+    {
+      id: "customers",
+      label: "New Customers",
+      value: 150,
+      change: -5.2,
       trend: "down",
-      icon: <Package className="w-6 h-6 text-blue-500" />
+      icon: Users,
     },
     {
-      title: "Active Users",
-      value: "892",
-      change: "+5.7%",
+      id: "growth",
+      label: "Growth Rate",
+      value: 15.7,
+      change: 2.1,
       trend: "up",
-      icon: <Users className="w-6 h-6 text-purple-500" />
+      icon: BarChart3,
     },
-    {
-      title: "Growth Rate",
-      value: "8.2%",
-      change: "+1.2%",
-      trend: "up",
-      icon: <TrendingUp className="w-6 h-6 text-orange-500" />
-    }
   ];
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US').format(num);
+  };
 
   return (
-    <div className="mx-auto pb-5 w-full px-4 sm:px-6 lg:px-8 ml-0 sm:ml-64">
-      <Header name="Analytics Dashboard" />
-      
-      {/* Controls */}
-      <div className="mt-6 flex flex-wrap gap-4 items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-        <div className="flex gap-4">
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Analytics</h1>
+          <p className="text-gray-400">Monitor your business performance</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700/50">
+            <Calendar size={20} className="text-gray-400" />
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-transparent text-white focus:outline-none"
             >
-              <option value="week">Last Week</option>
-              <option value="month">Last Month</option>
-              <option value="year">Last Year</option>
+              <option value="last7days">Last 7 days</option>
+              <option value="last30days">Last 30 days</option>
+              <option value="last90days">Last 90 days</option>
+              <option value="lastYear">Last year</option>
             </select>
           </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <select
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="sales">Sales</option>
-              <option value="inventory">Inventory</option>
-              <option value="revenue">Revenue</option>
-            </select>
-          </div>
+          <button className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 text-gray-300 rounded-lg hover:bg-gray-700/50 transition-colors">
+            <Download size={20} />
+            <span className="hidden md:inline">Export</span>
+          </button>
         </div>
-        <button className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-          <Download className="w-4 h-4" />
-          Export Report
-        </button>
       </div>
 
-      {/* Key Metrics */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => (
-          <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metrics.map((metric) => (
+          <div
+            key={metric.id}
+            className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-6"
+          >
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{metric.title}</p>
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mt-1">{metric.value}</h3>
+              <div className="flex items-center gap-2 text-gray-400">
+                <metric.icon size={20} />
+                <span className="text-sm">{metric.label}</span>
               </div>
-              {metric.icon}
             </div>
-            <div className="mt-4 flex items-center">
-              {metric.trend === 'up' ? (
-                <ArrowUp className="w-4 h-4 text-green-500" />
-              ) : (
-                <ArrowDown className="w-4 h-4 text-red-500" />
-              )}
-              <span className={`ml-1 text-sm ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                {metric.change}
-              </span>
+            <div className="mt-4">
+              <div className="text-2xl font-bold text-white">
+                {metric.id === "revenue" ? formatCurrency(metric.value) : formatNumber(metric.value)}
+                {metric.id === "growth" && "%"}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                {metric.trend === "up" ? (
+                  <TrendingUp className="text-green-400" size={16} />
+                ) : (
+                  <TrendingDown className="text-red-400" size={16} />
+                )}
+                <span
+                  className={`text-sm font-medium ${
+                    metric.trend === "up" ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {metric.change}%
+                </span>
+                <span className="text-sm text-gray-400">vs last period</span>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Trend */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Sales Trend</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#6B7280" />
-                <YAxis stroke="#6B7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#F3F4F6'
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="#3B82F6" 
-                  fill="#93C5FD" 
-                  fillOpacity={0.3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+      {/* Sales Overview Chart */}
+      <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h2 className="text-lg font-semibold text-white">Sales Overview</h2>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span className="text-sm text-gray-400">Revenue</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span className="text-sm text-gray-400">Orders</span>
+            </div>
           </div>
         </div>
-
-        {/* Revenue vs Sales */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Revenue vs Sales</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#6B7280" />
-                <YAxis stroke="#6B7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#F3F4F6'
-                  }}
-                />
-                <Line type="monotone" dataKey="sales" stroke="#3B82F6" strokeWidth={2} />
-                <Line type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={mockSalesData}
+              margin={{
+                top: 10,
+                right: 30,
+                left: 0,
+                bottom: 0,
+              }}
+            >
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22C55E" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis 
+                dataKey="date" 
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF' }}
+              />
+              <YAxis 
+                yAxisId="left"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF' }}
+                tickFormatter={(value) => `$${value/1000}k`}
+              />
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1F2937',
+                  border: '1px solid #374151',
+                  borderRadius: '0.5rem',
+                }}
+                labelStyle={{ color: '#F3F4F6' }}
+                itemStyle={{ color: '#F3F4F6' }}
+                formatter={(value: number, name: string) => [
+                  name === 'revenue' ? formatCurrency(value) : value,
+                  name === 'revenue' ? 'Revenue' : 'Orders'
+                ]}
+              />
+              <Area
+                yAxisId="left"
+                type="monotone"
+                dataKey="revenue"
+                stroke="#3B82F6"
+                fillOpacity={1}
+                fill="url(#colorRevenue)"
+              />
+              <Area
+                yAxisId="right"
+                type="monotone"
+                dataKey="orders"
+                stroke="#22C55E"
+                fillOpacity={1}
+                fill="url(#colorOrders)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
+      </div>
 
-        {/* Inventory Distribution */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Inventory Distribution</h3>
-          <div className="h-80">
+      {/* Category Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-6">
+          <h2 className="text-lg font-semibold text-white mb-6">Category Distribution</h2>
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={inventoryData}
+                  data={mockCategoryData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
+                  innerRadius={60}
                   outerRadius={80}
-                  fill="#8884d8"
+                  paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
-                  {inventoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {mockCategoryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white',
-                    border: 'none',
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1F2937',
+                    border: '1px solid #374151',
                     borderRadius: '0.5rem',
-                  
                   }}
+                  labelStyle={{ color: '#F3F4F6' }}
+                  itemStyle={{ color: '#F3F4F6' }}
+                  formatter={(value: number) => [`${value}%`, 'Share']}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            {mockCategoryData.map((category) => (
+              <div key={category.name} className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: category.color }}
+                />
+                <span className="text-sm text-gray-400">{category.name}</span>
+                <span className="text-sm font-medium text-white ml-auto">
+                  {category.value}%
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Monthly Comparison */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Monthly Comparison</h3>
-          <div className="h-80">
+        <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-6">
+          <h2 className="text-lg font-semibold text-white mb-6">Monthly Comparison</h2>
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salesData}>
+              <BarChart
+                data={mockSalesData}
+                margin={{
+                  top: 10,
+                  right: 30,
+                  left: 0,
+                  bottom: 0,
+                }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#6B7280" />
-                <YAxis stroke="#6B7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#F3F4F6'
-                  }}
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF' }}
                 />
-                <Bar dataKey="sales" fill="#3B82F6" />
-                <Bar dataKey="revenue" fill="#10B981" />
+                <YAxis 
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF' }}
+                  tickFormatter={(value) => `$${value/1000}k`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1F2937',
+                    border: '1px solid #374151',
+                    borderRadius: '0.5rem',
+                  }}
+                  labelStyle={{ color: '#F3F4F6' }}
+                  itemStyle={{ color: '#F3F4F6' }}
+                  formatter={(value: number) => [formatCurrency(value), 'Revenue']}
+                />
+                <Bar dataKey="revenue" fill="#3B82F6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -263,4 +364,4 @@ const Analytics = () => {
   );
 };
 
-export default Analytics; 
+export default AnalyticsPage; 

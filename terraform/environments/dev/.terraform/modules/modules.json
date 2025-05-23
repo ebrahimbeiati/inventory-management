@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"ec2_inventory","Source":"../../modules/ec2","Dir":"../../modules/ec2"},{"Key":"remote_backend","Source":"../../modules/backend","Dir":"../../modules/backend"}]}

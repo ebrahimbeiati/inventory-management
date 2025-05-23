@@ -8,29 +8,19 @@ datasource db {
 }
 
 model Users {
-  userId    String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  role      String   // or use enum if you have fixed roles
-  status    String   // or use enum if you have fixed statuses
-  createdAt DateTime @default(now())
-  lastLogin DateTime? // Added to track the last login timestamp
+  userId String @id
+  name   String
+  email  String
 }
 
 model Products {
-  productId     String    @id
+  productId     String      @id
   name          String
   price         Float
   stockQuantity Int
-  description   String?   // Optional: product description
-  category      String?   // Optional: product category
-  tags          String?   // Optional: comma-separated tags
-  imageUrl      String?   // Optional: URL for product image
-  rating        Float?    // Optional: product rating (e.g., 1-5)
-  createdAt     DateTime  @default(now()) // Track creation date
-  updatedAt     DateTime  @updatedAt // Track update date
-  Sales         Sales[]
+  rating        Float?
   Purchases     Purchases[]
+  Sales         Sales[]
 }
 
 model Sales {

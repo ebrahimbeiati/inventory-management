@@ -16,7 +16,7 @@ export const getExpensesByCategory = async (
       }
     );
     const expenseByCategorySummary = expenseByCategorySummaryRaw.map(
-      (item: any) => ({
+      (item) => ({
         ...item,
         amount: item.amount.toString(),
       })

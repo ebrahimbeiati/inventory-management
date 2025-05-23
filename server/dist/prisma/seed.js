@@ -18,19 +18,11 @@ const path_1 = __importDefault(require("path"));
 const prisma = new client_1.PrismaClient();
 function deleteAllData(orderedFileNames) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Define deletion order to handle foreign key constraints
-        const deletionOrder = [
-            "sales",
-            "salesSummary",
-            "purchases",
-            "purchaseSummary",
-            "expenses",
-            "expenseByCategory",
-            "expenseSummary",
-            "products",
-            "users"
-        ];
-        for (const modelName of deletionOrder) {
+        const modelNames = orderedFileNames.map((fileName) => {
+            const modelName = path_1.default.basename(fileName, path_1.default.extname(fileName));
+            return modelName.charAt(0).toUpperCase() + modelName.slice(1);
+        });
+        for (const modelName of modelNames) {
             const model = prisma[modelName];
             if (model) {
                 yield model.deleteMany({});
