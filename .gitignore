@@ -1,7 +1,9 @@
 # Terraform
-**/.terraform/*
-*.tfstate
-*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfstate.*
 crash.log
 crash.*.log
 *.tfvars
@@ -11,7 +13,6 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
-.terraform.lock.hcl
 
 # Node
 node_modules/
