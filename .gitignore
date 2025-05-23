@@ -24,6 +24,17 @@ build/
 .env.test.local
 .env.production.local
 
+# Generated files
+server/generated/
+server/prisma/app/generated/
+*.d.ts
+
+# Test assets
+server/assets/*.png
+server/assets/*.jpg
+server/assets/*.jpeg
+server/assets/*.gif
+
 # IDE
 .idea/
 .vscode/
