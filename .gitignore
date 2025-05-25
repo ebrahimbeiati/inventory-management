@@ -1,46 +1,8 @@
-# Terraform
-.terraform/
-.terraform.lock.hcl
-terraform.tfstate
-terraform.tfstate.backup
-terraform.tfstate.*
-crash.log
-crash.*.log
-*.tfvars
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-.terraformrc
-terraform.rc
-
-# Node
-node_modules/
-dist/
-build/
+client/node_modules/
+server/node_modules/
+client/dist/
+server/dist/
+client/.env/
+server/.env/
+client/.next/
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Generated files
-server/generated/
-server/prisma/app/generated/
-*.d.ts
-
-# Test assets
-server/assets/*.png
-server/assets/*.jpg
-server/assets/*.jpeg
-server/assets/*.gif
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
