@@ -22,10 +22,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
 /* ROUTES */
-app.use("/dashboard", dashboardRoutes); // http://localhost:8000/dashboard
-app.use("/products", productRoutes); // http://localhost:8000/products
-app.use("/users", userRoutes); // http://localhost:8000/users
-app.use("/expenses", expenseRoutes); // http://localhost:8000/expenses
+app.use("/dashboard", dashboardRoutes); 
+app.use("/products", productRoutes); 
+app.use("/users", userRoutes); 
+app.use("/expenses", expenseRoutes); 
 
 /* SERVER */
 const port = Number(process.env.PORT) || 3001;

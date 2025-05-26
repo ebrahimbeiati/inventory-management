@@ -65,18 +65,30 @@ export const api = createApi({
       query: () => "/dashboard",
       providesTags: ["DashboardMetrics"],
     }),
-    getProducts: build.query<Product[], string | void>({
-      query: (search) => ({
-        url: "/products",
-        params: search ? { search } : {},
-      }),
+    getProducts: build.query<Product[], void>({
+      query: () => "products",
       providesTags: ["Products"],
     }),
     createProduct: build.mutation<Product, NewProduct>({
-      query: (newProduct) => ({
-        url: "/products",
+      query: (product) => ({
+        url: "products",
         method: "POST",
-        body: newProduct,
+        body: product,
+      }),
+      invalidatesTags: ["Products"],
+    }),
+    updateProduct: build.mutation<Product, Product>({
+      query: (product) => ({
+        url: `products/${product.productId}`,
+        method: "PUT",
+        body: product,
+      }),
+      invalidatesTags: ["Products"],
+    }),
+    deleteProduct: build.mutation<void, string>({
+      query: (productId) => ({
+        url: `products/${productId}`,
+        method: "DELETE",
       }),
       invalidatesTags: ["Products"],
     }),
@@ -95,6 +107,8 @@ export const {
   useGetDashboardMetricsQuery,
   useGetProductsQuery,
   useCreateProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductMutation,
   useGetUsersQuery,
   useGetExpensesByCategoryQuery,
 } = api;

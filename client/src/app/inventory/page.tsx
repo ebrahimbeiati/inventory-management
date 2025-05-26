@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetProductsQuery } from "@/state/api";
+import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation, Product as APIProduct } from "@/state/api";
 import {
   Package,
   AlertTriangle,
@@ -32,28 +32,7 @@ import {
   Eye,
   TrendingDown,
 } from "lucide-react";
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  stock: number;
-  status: "in_stock" | "low_stock" | "out_of_stock";
-  lastUpdated: string;
-  supplier: string;
-  sku: string;
-  sales: {
-    daily: number;
-    weekly: number;
-    monthly: number;
-  };
-  metrics: {
-    revenue: number;
-    profit: number;
-    margin: number;
-  };
-}
+import CreateProductModal from "../products/CreateProductModal";
 
 interface InventoryItem {
   id: string;
@@ -123,7 +102,10 @@ interface StockMetric {
 }
 
 export default function Inventory() {
-  const { data: productsData, isLoading, isError } = useGetProductsQuery();
+  const { data: productsData, isLoading, isError, refetch } = useGetProductsQuery();
+  const [createProduct] = useCreateProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
+  const [deleteProduct] = useDeleteProductMutation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -133,16 +115,18 @@ export default function Inventory() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   // Transform API data to match our interface
   const inventoryItems: InventoryItem[] = productsData?.map(product => ({
-    id: product.id || "",
-    name: product.name || "",
-    category: product.category || "Uncategorized",
-    quantity: product.stock || 0,
+    id: product.productId,
+    name: product.name,
+    category: "Uncategorized", // Default category
+    quantity: product.stockQuantity,
     minQuantity: 5,
     maxQuantity: 100,
-    status: (product.stock || 0) > 10 ? "in_stock" : (product.stock || 0) > 0 ? "low_stock" : "out_of_stock",
+    status: product.stockQuantity > 10 ? "in_stock" : product.stockQuantity > 0 ? "low_stock" : "out_of_stock",
     lastUpdated: new Date().toISOString(),
     location: {
       warehouse: "Warehouse A",
@@ -151,13 +135,13 @@ export default function Inventory() {
       bin: "B" + Math.floor(Math.random() * 20),
     },
     supplier: {
-      name: product.supplier || "Unknown",
+      name: "Unknown",
       contact: "supplier@example.com",
       leadTime: 7,
       reliability: Math.floor(Math.random() * 100),
     },
-    sku: product.sku || "N/A",
-    value: (product.price || 0) * (product.stock || 0),
+    sku: "N/A",
+    value: product.price,
     reorderPoint: 10,
     leadTime: 7,
     batchInfo: {
@@ -275,6 +259,44 @@ export default function Inventory() {
     setIsModalOpen(true);
   };
 
+  const handleEdit = (item: InventoryItem) => {
+    setEditingItem(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateProduct = async (formData: any) => {
+    if (!editingItem) return;
+
+    try {
+      await updateProduct({
+        productId: editingItem.id,
+        name: formData.name,
+        price: formData.price,
+        stockQuantity: formData.stockQuantity,
+        rating: formData.rating
+      }).unwrap();
+      setIsEditModalOpen(false);
+      setEditingItem(null);
+      refetch();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      alert("Failed to update product. Please try again.");
+    }
+  };
+
+  const handleDelete = async (item: InventoryItem) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteProduct(item.id).unwrap();
+        // Refresh the products list
+        refetch();
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Failed to delete product. Please try again.");
+      }
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
@@ -369,6 +391,21 @@ export default function Inventory() {
     },
   ];
 
+  const handleCreateProduct = async (formData: any) => {
+    try {
+      await createProduct({
+        name: formData.name,
+        price: formData.price,
+        stockQuantity: formData.stockQuantity,
+        rating: formData.rating
+      }).unwrap();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      alert('Failed to create product. Please try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-center">
@@ -402,7 +439,10 @@ export default function Inventory() {
           <p className="text-gray-400">Manage your product inventory</p>
         </div>
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
             <Plus size={20} />
             <span>Add Product</span>
           </button>
@@ -520,11 +560,13 @@ export default function Inventory() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      item.status === "in_stock" ? "bg-green-400 text-green-400" :
-                      item.status === "low_stock" ? "bg-yellow-400 text-yellow-400" :
-                      "bg-red-400 text-red-400"
+                      item.status === "in_stock" ? "bg-green-500/20 text-green-400" :
+                      item.status === "low_stock" ? "bg-yellow-500/20 text-yellow-400" :
+                      "bg-red-500/20 text-red-400"
                     }`}>
-                      {item.status === "in_stock" ? "In Stock" : item.status === "low_stock" ? "Low Stock" : "Out of Stock"}
+                      {item.status === "in_stock" ? "In Stock" : 
+                       item.status === "low_stock" ? "Low Stock" : 
+                       "Out of Stock"}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -534,13 +576,22 @@ export default function Inventory() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="p-1 text-gray-400 hover:text-white">
+                      <button 
+                        onClick={() => handleViewDetails(item)}
+                        className="p-1 text-gray-400 hover:text-white"
+                      >
                         <Eye size={16} />
                       </button>
-                      <button className="p-1 text-gray-400 hover:text-white">
+                      <button 
+                        onClick={() => handleEdit(item)}
+                        className="p-1 text-gray-400 hover:text-white"
+                      >
                         <Edit size={16} />
                       </button>
-                      <button className="p-1 text-gray-400 hover:text-red-400">
+                      <button 
+                        onClick={() => handleDelete(item)}
+                        className="p-1 text-gray-400 hover:text-red-400"
+                      >
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -748,6 +799,99 @@ export default function Inventory() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Edit Product Modal */}
+      <AnimatePresence>
+        {isEditModalOpen && editingItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsEditModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white">Edit Product</h2>
+                <p className="text-gray-400">Update product information</p>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = {
+                  name: editingItem.name,
+                  price: editingItem.value,
+                  stockQuantity: editingItem.quantity,
+                  rating: 0
+                };
+                handleUpdateProduct(formData);
+              }}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400">Name</label>
+                    <input
+                      type="text"
+                      value={editingItem.name}
+                      onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                      className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400">Price</label>
+                    <input
+                      type="number"
+                      value={editingItem.value}
+                      onChange={(e) => setEditingItem({ ...editingItem, value: parseFloat(e.target.value) })}
+                      className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400">Stock Quantity</label>
+                    <input
+                      type="number"
+                      value={editingItem.quantity}
+                      onChange={(e) => setEditingItem({ ...editingItem, quantity: parseInt(e.target.value) })}
+                      className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
+                      min="0"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create Product Modal */}
+      <CreateProductModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCreate={handleCreateProduct}
+      />
     </div>
   );
 }
